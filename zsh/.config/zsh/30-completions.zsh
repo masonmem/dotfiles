@@ -12,5 +12,4 @@ if command -v kubectl >/dev/null 2>&1; then
   compdef kubecolor=kubectl 2>/dev/null
 fi
 
-# iTerm2 shell integration (track cwd, history, SSH)
-test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
+# iTerm2 shell integration is handled by p10k natively — no separate source needed.
