@@ -75,7 +75,7 @@ fi
 if ! installed lazygit; then
   echo "Installing lazygit..."
   LG_VER=$(curl -sL "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep tag_name | cut -d'"' -f4 | tr -d 'v')
-  curl -sL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VER}/lazygit_${LG_VER}_Linux_${ARCH_ALT}.tar.gz" | tar xz -C "$TMP"
+  curl -sL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VER}/lazygit_${LG_VER}_linux_${GOARCH}.tar.gz" | tar xz -C "$TMP"
   cp "$TMP/lazygit" "$BIN/"
 fi
 
