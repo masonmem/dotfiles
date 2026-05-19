@@ -1,0 +1,32 @@
+# ── Global defaults for all hosts ───────────────────────────────────────────
+Host *
+  # Use ed25519 key by default (add more IdentityFile lines if you have multiple keys)
+  IdentityFile ~/.ssh/id_ed25519
+  # Add keys to macOS Keychain agent so you don't retype passphrases
+  AddKeysToAgent yes
+  UseKeychain yes
+  # Keep connections alive (useful for long-running sessions / tunnels)
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+  # Connection multiplexing — reuse an existing connection for subsequent SSH/SCP/rsync
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 600
+
+# ── Host entries ─────────────────────────────────────────────────────────────
+# Add your hosts below. Example:
+#
+# Host myserver
+#   HostName 192.168.1.100
+#   User ubuntu
+#   Port 22
+#
+# Host bastion
+#   HostName bastion.example.com
+#   User ec2-user
+#   IdentityFile ~/.ssh/id_ed25519_aws
+#
+# Host prod-via-bastion
+#   HostName 10.0.0.50
+#   User ubuntu
+#   ProxyJump bastion

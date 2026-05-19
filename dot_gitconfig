@@ -8,6 +8,13 @@
 [interactive]
     diffFilter = delta --color-only --features=interactive
 
+[delta]
+    navigate = true           # n/N to jump between changed files in a diff
+    line-numbers = true       # show line numbers alongside diffs
+    syntax-theme = Dracula    # matches bat theme
+    features = decorations
+    dark = true
+
 [delta "interactive"]
     keep-plus-minus-markers = false
 

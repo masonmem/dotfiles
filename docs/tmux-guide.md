@@ -25,9 +25,9 @@ Session
 
 ## Your prefix key
 
-All tmux shortcuts start with the **prefix key**. Your config uses **`Ctrl-A`** (changed from the default `Ctrl-B`).
+All tmux shortcuts start with the **prefix key**: **`Ctrl-B`** (the default).
 
-Written as `<prefix>` below. So `<prefix> |` means: press `Ctrl-A`, release, then press `|`.
+Written as `<prefix>` below. So `<prefix> |` means: press `Ctrl-B`, release, then press `|`.
 
 ---
 

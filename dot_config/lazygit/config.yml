@@ -1,0 +1,55 @@
+# lazygit configuration
+# Docs: https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
+
+gui:
+  # Show nerd font icons (requires Nerd Font — already needed for p10k)
+  nerdFontsVersion: "3"
+  showIcons: true
+  # Expand the focused side panel slightly for readability
+  expandFocusedSidePanel: true
+  # Scroll speed
+  mouseEvents: true
+  theme:
+    activeBorderColor:
+      - "#89b4fa"  # Catppuccin blue — matches tmux active pane border
+      - bold
+    inactiveBorderColor:
+      - "#45475a"  # Catppuccin surface
+    optionsTextColor:
+      - "#89dceb"  # Catppuccin sky
+    selectedLineBgColor:
+      - "#313244"  # Catppuccin surface0
+    cherryPickedCommitBgColor:
+      - "#45475a"
+    cherryPickedCommitFgColor:
+      - "#89b4fa"
+    unstagedChangesColor:
+      - "#f38ba8"  # Catppuccin red
+    defaultFgColor:
+      - "#cdd6f4"  # Catppuccin text
+
+git:
+  paging:
+    # Use delta for diffs inside lazygit — no paging (lazygit handles scrolling)
+    colorArg: always
+    pager: delta --color-only --dark --paging=never --line-numbers
+  # Enables auto-fetching of remotes in background
+  autoFetch: true
+  autoRefresh: true
+  # Show branch ahead/behind counts
+  branchLogCmd: "git log --graph --color=always --abbrev-commit --decorate --date=relative --pretty=medium {{branchName}} --"
+
+os:
+  # Open files in neovim from within lazygit
+  edit: "nvim {{filename}}"
+  editAtLine: "nvim +{{line}} {{filename}}"
+  editAtLineAndWait: "nvim +{{line}} {{filename}}"
+  open: "open {{link}}"
+
+keybinding:
+  universal:
+    # Quit with q or Ctrl-C (both feel natural)
+    quit: "q"
+    quit-alt1: "<c-c>"
+    return: "<esc>"
+    togglePanel: "<tab>"

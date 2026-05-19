@@ -5,11 +5,13 @@ Personal macOS dev environment — Apple Silicon, zsh, Homebrew. Managed with [c
 ## Bootstrap a new machine
 
 ```bash
-# Install chezmoi and apply everything in one shot
+# 1. Install Homebrew, then restore all formulae
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew bundle --file=Brewfile
+
+# 2. Install chezmoi and apply dotfiles
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply gh:masonmem/dotfiles
 ```
-
-Then install Homebrew and the formulae you need. A `Brewfile` would live here eventually to automate that too.
 
 ---
 
@@ -17,18 +19,22 @@ Then install Homebrew and the formulae you need. A `Brewfile` would live here ev
 
 | File | Purpose |
 |------|---------|
+| `Brewfile` | Full snapshot of brew formulae + casks |
 | `~/.zshrc` | Shell entry point — loads oh-my-zsh + sources `~/.config/zsh/*.zsh` |
 | `~/.zshenv` | Cargo env (runs for every shell, including scripts) |
 | `~/.zprofile` | Homebrew shellenv + pipx PATH (login shells) |
 | `~/.config/zsh/00-path.zsh` | PATH deduplication |
 | `~/.config/zsh/10-env.zsh` | EDITOR, XDG dirs, BAT_THEME, NVM_DIR |
-| `~/.config/zsh/20-aliases.zsh` | Modern CLI aliases: bat, eza, kubecolor, lazygit |
+| `~/.config/zsh/20-aliases.zsh` | Modern CLI aliases: bat, eza, kubecolor, lazygit, tldr |
 | `~/.config/zsh/30-completions.zsh` | kubectl completion cache + kubecolor compdef + iTerm2 integration |
 | `~/.config/zsh/40-tools.zsh` | fzf (Ctrl-T/Alt-C), atuin (Ctrl-R), zoxide (replaces `cd`) |
 | `~/.config/zsh/70-nvm.zsh` | Lazy NVM — loads Node only when first invoked |
-| `~/.gitconfig` | delta pager, aliases, pull.rebase, LFS |
+| `~/.gitconfig` | delta pager (line numbers, navigate), aliases, pull.rebase |
+| `~/.config/nvim/init.lua` | Neovim — lazy.nvim, treesitter, telescope, catppuccin |
+| `~/.config/lazygit/config.yml` | lazygit — delta diffs, catppuccin theme, nvim integration |
+| `~/.ssh/config` | SSH global defaults — keepalive, multiplexing, keychain |
 | `~/.p10k.zsh` | Powerlevel10k prompt config |
-| `~/.tmux.conf` | tmux config — prefix Ctrl-A, mouse, vim nav, Catppuccin colors |
+| `~/.tmux.conf` | tmux — prefix Ctrl-B, mouse, vim nav, catppuccin status bar |
 
 ---
 
@@ -43,30 +49,33 @@ Key tool decisions:
 - **zoxide** replaces `cd` transparently (`--cmd cd`). Use `zi` for the interactive picker.
 - **nvm** is lazy-loaded — `node`, `npm`, `npx`, `yarn`, `pnpm` trigger the load on first call.
 - **kubecolor** is aliased to `kubectl`; completions delegate to the real `kubectl` binary.
+- **tealdeer** provides `tldr` — fast Rust implementation of tldr pages. Run `tldr --update` to refresh.
 
 ---
 
-## tmux
+## Guides
 
-New to tmux? Start here: [docs/tmux-guide.md](docs/tmux-guide.md)
-
-Config highlights: prefix is `Ctrl-A`, mouse is on, pane navigation is vim-style (`h/j/k/l`), `|` and `-` split the screen, copy mode yanks to `pbcopy`.
+| Guide | Topic |
+|-------|-------|
+| [docs/neovim-guide.md](docs/neovim-guide.md) | Neovim config, plugins, keybindings, vi→nvim upgrade path |
+| [docs/lazygit-guide.md](docs/lazygit-guide.md) | lazygit TUI — staging, commits, rebase, cherry-pick |
+| [docs/tmux-guide.md](docs/tmux-guide.md) | tmux sessions, windows, panes, copy mode |
 
 ---
 
 ## Updating
 
-After editing a managed file:
+After editing a managed file, sync it back and push:
 
 ```bash
-chezmoi re-add ~/.config/zsh/20-aliases.zsh   # sync changes back to the repo
-cd ~/.local/share/chezmoi && git add -A && git commit -m "update aliases"
-git push
+chezmoi re-add ~/.config/zsh/20-aliases.zsh
+cd ~/.local/share/chezmoi && git add -A && git commit -m "feat: ..." && git push
 ```
 
-Or edit directly in the chezmoi source and apply:
+Or edit directly in the chezmoi source:
 
 ```bash
-chezmoi edit ~/.zshrc        # opens in $EDITOR
-chezmoi apply                # applies changes
+chezmoi edit ~/.zshrc   # opens in $EDITOR, then:
+chezmoi apply           # applies to the real file
 ```
+
