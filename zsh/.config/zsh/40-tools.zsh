@@ -11,6 +11,9 @@ if command -v fzf >/dev/null 2>&1; then
   [[ -f "$_fzf_cache" && "$_fzf_cache" -nt "$(command -v fzf)" ]] || fzf --zsh >| "$_fzf_cache"
   source "$_fzf_cache"
   export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --info=inline'
+  # Dirs first, then files — mirrors Finder's "folders on top" behavior
+  export FZF_DEFAULT_COMMAND='{ fd --type d --color=never; fd --type f --color=never; } 2>/dev/null'
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=plain {} 2>/dev/null | head -100'"
   export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -50'"
 fi
