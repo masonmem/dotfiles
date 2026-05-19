@@ -86,14 +86,13 @@ require("lazy").setup({
     "nvim-treesitter/nvim-treesitter",
     build  = ":TSUpdate",
     config = function()
-      require("nvim-treesitter.configs").setup({
+      require("nvim-treesitter").setup({
         ensure_installed = {
           "bash", "go", "javascript", "json", "lua", "markdown",
           "python", "rust", "toml", "typescript", "vim", "vimdoc", "yaml",
         },
         auto_install = true,
         highlight    = { enable = true },
-        indent       = { enable = true },
       })
     end,
   },
@@ -101,7 +100,7 @@ require("lazy").setup({
   -- ── Status line ───────────────────────────────────────────────────────────
   {
     "nvim-lualine/lualine.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
+    dependencies = { "nvim-tree/nvim-web-devicons", "catppuccin/nvim" },
     config = function()
       require("lualine").setup({ options = { theme = "catppuccin" } })
     end,
@@ -110,7 +109,7 @@ require("lazy").setup({
   -- ── Fuzzy finder (requires ripgrep + fd — already installed) ─────────────
   {
     "nvim-telescope/telescope.nvim",
-    tag          = "0.1.x",
+    branch       = "0.1.x",
     dependencies = { "nvim-lua/plenary.nvim" },
     config       = function()
       require("telescope").setup({
