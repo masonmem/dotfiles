@@ -1,5 +1,6 @@
 # Environment variables
-export EDITOR="nvim"
+# Use nvim if installed, fall back to vim
+export EDITOR="${commands[nvim]:+nvim}${commands[nvim]:-vim}"
 export VISUAL="$EDITOR"
 
 # XDG base directories
