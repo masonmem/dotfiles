@@ -15,7 +15,7 @@ alias k='kubectl'
 
 # --- Git ---
 alias lg='lazygit'
-alias tldr='tldr --color=always'
+alias tldr='tldr --color'
 
 # --- Media ---
 alias youtube-dl='yt-dlp --remux-video mp4'
