@@ -3,7 +3,7 @@ alias vi='nvim'
 alias vim='nvim'
 
 # --- Modern CLI replacements ---
-alias cat='bat --paging=never --style=plain'
+alias cat='bat --paging=auto'
 alias ls='eza --group-directories-first'
 alias ll='eza -la --git --icons --group-directories-first'
 alias la='eza -la --icons --group-directories-first'
