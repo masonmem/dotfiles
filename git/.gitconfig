@@ -1,6 +1,5 @@
-[user]
-	name = Mason Morris
-	email = user@example.com
+[include]
+    path = ~/.gitconfig.local
 
 [core]
     pager = delta
