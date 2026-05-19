@@ -8,7 +8,7 @@ Standard Vim commands (`:w`, `:wq`, `:q!`, `/pattern`, `dd`, `yy`, `p`) work unc
 
 ## Config
 
-`~/.config/nvim/init.lua` — managed via chezmoi.
+`~/.config/nvim/init.lua` — managed via stow (`~/dotfiles/nvim/`).
 
 The config is plain Lua. It sets sensible defaults and bootstraps [lazy.nvim](https://github.com/folke/lazy.nvim) as the plugin manager. Plugins install automatically on first launch.
 
@@ -162,4 +162,4 @@ Run `:Lazy` inside nvim to manage plugins. Run `:TSUpdate` to update Treesitter 
 
 ## Config location
 
-`~/.config/nvim/init.lua` — managed via chezmoi. After editing: `chezmoi re-add ~/.config/nvim/init.lua`.
+`~/.config/nvim/init.lua` — managed via stow (`~/dotfiles/nvim/`). Edits are live immediately since it's a symlink.

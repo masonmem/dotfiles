@@ -1,105 +1,62 @@
-tap "dnote/dnote"
 tap "jesseduffield/lazygit"
 tap "romkatv/powerlevel10k"
-brew "atuin"
-brew "libgit2"
-brew "bat"
-brew "glib"
-brew "chezmoi"
-brew "cmake"
-brew "dnsdist"
-brew "eza"
-brew "fd"
-brew "ffmpeg"
-brew "fzf"
-brew "gh"
+
+# ── Core CLI tools ───────────────────────────────────────────────────────────
+brew "bat"                                 # cat with syntax highlighting
+brew "bat-extras"                          # batgrep, batdiff, batman, etc.
+brew "coreutils"                           # GNU core utilities
+brew "eza"                                 # modern ls replacement
+brew "fd"                                  # modern find replacement
+brew "fzf"                                 # fuzzy finder
+brew "htop"                                # interactive process viewer
+brew "jq"                                  # JSON processor
+brew "ripgrep"                             # modern grep replacement
+brew "tree"                                # directory tree viewer
+brew "watch"                               # run command periodically
+brew "wget"                                # HTTP file retriever
+brew "yq"                                  # YAML/JSON/XML processor
+
+# ── Shell ────────────────────────────────────────────────────────────────────
+brew "atuin"                               # shell history database (Ctrl-R)
+brew "powerlevel10k"                       # zsh theme
+brew "stow"                                # symlink farm manager (dotfiles)
+brew "tmux"                                # terminal multiplexer
+brew "zoxide"                              # smarter cd replacement
+brew "zsh"                                 # latest zsh (over macOS system zsh)
+brew "zsh-autosuggestions"                 # fish-like autosuggestions
+brew "zsh-syntax-highlighting"             # command syntax highlighting
+
+# ── Git ──────────────────────────────────────────────────────────────────────
 brew "git"
-brew "git-delta"
-brew "libidn2"
-brew "unbound"
-brew "gnutls"
-brew "go"
-brew "golangci-lint"
-brew "guile"
-brew "harfbuzz"
-brew "hfsutils"
-brew "htop"
-brew "iperf3"
-brew "jq"
-brew "k9s"
-brew "kubecolor"
-brew "kubectx"
-brew "lazygit"
-brew "libass"
-brew "nvm"
-brew "python@3.14"
-brew "pipx"
-brew "pnpm"
-brew "protobuf"
-brew "python@3.10"
-brew "qrencode"
-brew "ripgrep"
-brew "stern"
-brew "tmux"
-brew "wget"
-brew "yarn"
-brew "yq"
-brew "yt-dlp"
-brew "zoxide"
-brew "zsh"
-cask "copilot-cli"
-cask "db-browser-for-sqlite"
+brew "git-delta"                           # syntax-highlighted diff pager
+brew "git-lfs"                             # large file storage
+brew "gh"                                  # GitHub CLI
+brew "jesseduffield/lazygit/lazygit"       # terminal UI for git
+
+# ── Editors ──────────────────────────────────────────────────────────────────
+brew "neovim"                              # modern vim
+
+# ── Languages & runtimes ─────────────────────────────────────────────────────
+brew "go"                                  # Go programming language
+brew "golangci-lint"                       # Go linter aggregator
+brew "nvm"                                 # Node version manager
+brew "pipx"                                # install Python CLI tools in isolation
+brew "pnpm"                                # fast Node package manager
+brew "python@3.14"                         # Python
+brew "yarn"                                # Node package manager
+
+# ── Kubernetes ───────────────────────────────────────────────────────────────
+brew "k9s"                                 # terminal UI for k8s
+brew "kubecolor"                           # colorized kubectl output
+brew "kubectx"                             # switch k8s contexts/namespaces
+brew "stern"                               # multi-pod log tailing
+
+# ── Media & networking ───────────────────────────────────────────────────────
+brew "ffmpeg"                              # video/audio processing
+brew "yt-dlp"                              # video downloader
+brew "iperf3"                              # network bandwidth testing
+brew "qrencode"                            # QR code generator
+
+# ── Applications ─────────────────────────────────────────────────────────────
 cask "docker-desktop"
-vscode "akamud.vscode-theme-onedark"
-vscode "be5invis.toml"
-vscode "bierner.markdown-mermaid"
-vscode "biomejs.biome"
-vscode "bradlc.vscode-tailwindcss"
-vscode "catppuccin.catppuccin-vsc"
-vscode "christian-kohler.path-intellisense"
-vscode "csstools.postcss"
-vscode "dbaeumer.vscode-eslint"
-vscode "dracula-theme.theme-dracula"
-vscode "dsznajder.es7-react-js-snippets"
-vscode "enkia.tokyo-night"
-vscode "esbenp.prettier-vscode"
-vscode "gerrnperl.outline-map"
-vscode "github.copilot-chat"
-vscode "golang.go"
-vscode "humao.rest-client"
-vscode "josef.rouge-theme"
-vscode "miguelsolorio.min-theme"
-vscode "monokai.theme-monokai-pro-vscode"
-vscode "ms-azuretools.vscode-containers"
-vscode "ms-azuretools.vscode-docker"
-vscode "ms-kubernetes-tools.vscode-kubernetes-tools"
-vscode "ms-python.autopep8"
-vscode "ms-python.debugpy"
-vscode "ms-python.flake8"
-vscode "ms-python.python"
-vscode "ms-python.vscode-pylance"
-vscode "ms-python.vscode-python-envs"
-vscode "ms-vscode-remote.remote-containers"
-vscode "ms-vscode-remote.remote-ssh"
-vscode "ms-vscode-remote.remote-ssh-edit"
-vscode "ms-vscode-remote.remote-wsl"
-vscode "ms-vscode-remote.vscode-remote-extensionpack"
-vscode "ms-vscode.remote-explorer"
-vscode "ms-vscode.remote-server"
-vscode "msjsdiag.vscode-react-native"
-vscode "oderwat.indent-rainbow"
-vscode "pkief.material-icon-theme"
-vscode "redhat.vscode-xml"
-vscode "redhat.vscode-yaml"
-vscode "robbowen.synthwave-vscode"
-vscode "sdras.night-owl"
-vscode "stkb.rewrap"
-vscode "stoplight.spectral"
-vscode "tamasfe.even-better-toml"
-vscode "wayou.vscode-todo-highlight"
-vscode "whizkydee.material-palenight-theme"
-vscode "wix.vscode-import-cost"
-vscode "yzhang.markdown-all-in-one"
-vscode "zhuangtongfa.material-theme"
-cargo "tauri-cli"
-npm "corepack"
+cask "font-fira-code"                      # Nerd Font for terminal/editor

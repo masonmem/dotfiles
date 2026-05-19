@@ -15,16 +15,27 @@ fpath=(
 # ── oh-my-zsh ───────────────────────────────────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(
-  git
-  macos
-  kube-ps1
-  vscode
-  zsh-autosuggestions
-  zsh-syntax-highlighting
-  # Removed: z (replaced by zoxide in 40-tools.zsh)
-  # Removed: eza-zsh (replaced by explicit aliases in 20-aliases.zsh)
-)
+
+if [[ -z "${DEVCONTAINER}" ]]; then
+  plugins=(
+    git
+    macos
+    kube-ps1
+    vscode
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+  )
+else
+  # Dev containers: skip macOS-only plugin; others work via oh-my-zsh mount
+  plugins=(
+    git
+    kube-ps1
+    vscode
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+  )
+fi
+
 source "$ZSH/oh-my-zsh.sh"
 
 # ── Modular config ──────────────────────────────────────────────────────────
@@ -34,4 +45,3 @@ done
 
 # ── Prompt ──────────────────────────────────────────────────────────────────
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-\nexport PATH="$HOME/.local/bin:$PATH"
