@@ -100,9 +100,9 @@ require("lazy").setup({
   -- ── Status line ───────────────────────────────────────────────────────────
   {
     "nvim-lualine/lualine.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons", "catppuccin/nvim" },
+    dependencies = { "nvim-tree/nvim-web-devicons", "catppuccin" },
     config = function()
-      require("lualine").setup({ options = { theme = "catppuccin" } })
+      require("lualine").setup({ options = { theme = "catppuccin-mocha" } })
     end,
   },
 
@@ -133,7 +133,9 @@ require("lazy").setup({
     "folke/which-key.nvim",
     event  = "VeryLazy",
     config = function()
-      require("which-key").setup()
+      require("which-key").setup({
+        icons = { mappings = false },
+      })
     end,
   },
 
