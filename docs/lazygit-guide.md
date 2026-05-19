@@ -15,17 +15,17 @@ Press `?` at any time to see all keybindings for the focused panel. Press `Esc` 
 
 ## Layout
 
-```
+```text
 ┌─────────────────┬────────────────────────────────────────┐
-│  Status (1)     │                                        │
-├─────────────────┤           Diff / Preview               │
-│  Files (2)      │                                        │
-├─────────────────┤   (shows delta diff for whatever       │
-│  Branches (3)   │    is selected in the left panels)     │
-├─────────────────┤                                        │
-│  Commits (4)    │                                        │
-├─────────────────┤                                        │
-│  Stash (5)      │                                        │
+│  Status (1)     │                                     │
+├─────────────────┤           Diff / Preview             │
+│  Files (2)      │                                     │
+├─────────────────┤   (shows delta diff for whatever     │
+│  Branches (3)   │    is selected in the left panels)  │
+├─────────────────┤                                      │
+│  Commits (4)    │                                     │
+├─────────────────┤                                      │
+│  Stash (5)      │                                     │
 └─────────────────┴────────────────────────────────────────┘
 ```
 
@@ -35,49 +35,53 @@ Switch panels with the number keys `1–5`, or `Tab` to cycle through them.
 
 ## Essential keybindings
 
-### Files panel (the one you'll use most)
-| Key | Action |
-|-----|--------|
-| `Space` | Stage / unstage file |
-| `a` | Stage **all** files |
-| `c` | Commit staged changes (opens commit message editor) |
-| `A` | Amend last commit |
-| `d` | View diff for file |
-| `e` | Open file in nvim |
-| `i` | Add to .gitignore |
+### Files panel
+
+| Key     | Action                                              |
+| ------- | --------------------------------------------------- |
+| `Space` | Stage / unstage file                                |
+| `a`     | Stage **all** files                                 |
+| `c`     | Commit staged changes (opens commit message editor) |
+| `A`     | Amend last commit                                   |
+| `d`     | View diff for file                                  |
+| `e`     | Open file in nvim                                   |
+| `i`     | Add to .gitignore                                   |
 
 ### Commits panel
-| Key | Action |
-|-----|--------|
-| `Space` | Checkout commit |
-| `g` | Reset to commit (interactive menu: soft/mixed/hard) |
-| `r` | Reword commit message |
-| `e` | Edit commit (interactive rebase) |
-| `f` | Fixup — squash into previous commit |
-| `d` | Drop commit |
-| `C` | Copy commit SHA |
-| `p` | Pick commit (during rebase) |
+
+| Key     | Action                                              |
+| ------- | --------------------------------------------------- |
+| `Space` | Checkout commit                                     |
+| `g`     | Reset to commit (interactive menu: soft/mixed/hard) |
+| `r`     | Reword commit message                               |
+| `e`     | Edit commit (interactive rebase)                    |
+| `f`     | Fixup — squash into previous commit                 |
+| `d`     | Drop commit                                         |
+| `C`     | Copy commit SHA                                     |
+| `p`     | Pick commit (during rebase)                         |
 
 ### Branches panel
-| Key | Action |
-|-----|--------|
-| `Space` | Checkout branch |
-| `n` | New branch |
-| `M` | Merge into current branch |
-| `r` | Rebase current branch onto selected |
-| `d` | Delete branch |
-| `u` | Set upstream |
+
+| Key     | Action                              |
+| ------- | ----------------------------------- |
+| `Space` | Checkout branch                     |
+| `n`     | New branch                          |
+| `M`     | Merge into current branch           |
+| `r`     | Rebase current branch onto selected |
+| `d`     | Delete branch                       |
+| `u`     | Set upstream                        |
 
 ### Universal
-| Key | Action |
-|-----|--------|
-| `P` | Push |
-| `p` (not in commits) | Pull |
-| `R` | Refresh |
-| `z` | Undo last git operation |
-| `Ctrl-z` | Redo |
-| `?` | Show keybindings for current panel |
-| `q` | Quit |
+
+| Key                  | Action                             |
+| -------------------- | ---------------------------------- |
+| `P`                  | Push                               |
+| `p` (not in commits) | Pull                               |
+| `R`                  | Refresh                            |
+| `z`                  | Undo last git operation            |
+| `Ctrl-z`             | Redo                               |
+| `?`                  | Show keybindings for current panel |
+| `q`                  | Quit                               |
 
 ---
 

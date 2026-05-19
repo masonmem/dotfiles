@@ -8,7 +8,7 @@ The killer feature: a tmux session keeps running even if you close your terminal
 
 ## Core concepts
 
-```
+```text
 Session
  └── Window 1 (like a browser tab)
       ├── Pane A (left)
@@ -23,7 +23,7 @@ Session
 
 ---
 
-## Your prefix key
+## Prefix key
 
 All tmux shortcuts start with the **prefix key**: **`Ctrl-B`** (the default).
 
@@ -48,53 +48,58 @@ Once inside tmux, everything goes through the prefix:
 ## Cheat sheet
 
 ### Sessions
-| Key / Command | Action |
-|---------------|--------|
-| `<prefix> $` | Rename current session |
-| `<prefix> d` | **Detach** (leaves session running) |
-| `<prefix> s` | List & switch sessions (interactive) |
-| `tmux attach` | Re-attach to last session |
+
+| Key / Command | Action                               |
+| ------------- | ------------------------------------ |
+| `<prefix> $`  | Rename current session               |
+| `<prefix> d`  | **Detach** (leaves session running)  |
+| `<prefix> s`  | List & switch sessions (interactive) |
+| `tmux attach` | Re-attach to last session            |
 
 ### Windows (tabs)
-| Key | Action |
-|-----|--------|
-| `<prefix> c` | New window (opens in current dir) |
-| `<prefix> ,` | Rename window |
-| `<prefix> w` | List & switch windows |
-| `<prefix> n` / `p` | Next / previous window |
-| `<prefix> 1–9` | Jump to window by number |
-| `<prefix> &` | Close window (with confirm) |
+
+| Key                | Action                            |
+| ------------------ | --------------------------------- |
+| `<prefix> c`       | New window (opens in current dir) |
+| `<prefix> ,`       | Rename window                     |
+| `<prefix> w`       | List & switch windows             |
+| `<prefix> n` / `p` | Next / previous window            |
+| `<prefix> 1–9`     | Jump to window by number          |
+| `<prefix> &`       | Close window (with confirm)       |
 
 ### Panes (splits)
-| Key | Action |
-|-----|--------|
-| `<prefix> \|` | Split **vertically** (left/right) |
-| `<prefix> -` | Split **horizontally** (top/bottom) |
-| `<prefix> h/j/k/l` | Navigate panes (vim-style) |
-| `<prefix> H/J/K/L` | Resize pane (hold for repeat) |
-| `<prefix> z` | **Zoom** pane to full screen (toggle) |
-| `<prefix> x` | Close pane (with confirm) |
-| `<prefix> {` / `}` | Swap pane position |
-| `<prefix> Space` | Cycle through pane layouts |
+
+| Key                | Action                                |
+| ------------------ | ------------------------------------- |
+| `<prefix> \|`      | Split **vertically** (left/right)     |
+| `<prefix> -`       | Split **horizontally** (top/bottom)   |
+| `<prefix> h/j/k/l` | Navigate panes (vim-style)            |
+| `<prefix> H/J/K/L` | Resize pane (hold for repeat)         |
+| `<prefix> z`       | **Zoom** pane to full screen (toggle) |
+| `<prefix> x`       | Close pane (with confirm)             |
+| `<prefix> {` / `}` | Swap pane position                    |
+| `<prefix> Space`   | Cycle through pane layouts            |
 
 ### Copy mode (scroll + search)
-| Key | Action |
-|-----|--------|
-| `<prefix> Enter` | Enter copy mode |
-| `v` | Start selection (vi visual) |
-| `y` | Copy selection → clipboard (`pbcopy`) |
-| `q` / `Esc` | Exit copy mode |
-| `/` | Search forward |
-| `?` | Search backward |
-| `n` / `N` | Next / previous match |
-| `PgUp` / mouse scroll | Scroll up through history |
+
+| Key                   | Action                                |
+| --------------------- | ------------------------------------- |
+| `<prefix> Enter`      | Enter copy mode                       |
+| `v`                   | Start selection (vi visual)           |
+| `y`                   | Copy selection → clipboard (`pbcopy`) |
+| `q` / `Esc`           | Exit copy mode                        |
+| `/`                   | Search forward                        |
+| `?`                   | Search backward                       |
+| `n` / `N`             | Next / previous match                 |
+| `PgUp` / mouse scroll | Scroll up through history             |
 
 ### Misc
-| Key | Action |
-|-----|--------|
+
+| Key          | Action                |
+| ------------ | --------------------- |
 | `<prefix> r` | Reload `~/.tmux.conf` |
-| `<prefix> ?` | Show all keybindings |
-| `<prefix> t` | Show a clock |
+| `<prefix> ?` | Show all keybindings  |
+| `<prefix> t` | Show a clock          |
 
 ---
 
@@ -151,7 +156,7 @@ tmux attach -t build    # pick up right where you left off
 - **Mouse is on** — you can click panes to focus, drag borders to resize, and scroll with the trackpad.
 - **Zoom (`<prefix> z`)** is great for temporarily going full-screen on a pane without destroying the layout.
 - Run `tmux list-keys` to see every binding. Run `tmux show-options -g` to see all global options.
-- Inside copy mode, your normal vim search keys (`/`, `n`, `N`) work for scrollback search.
+- Inside copy mode, standard vim search keys (`/`, `n`, `N`) work for scrollback search.
 
 ---
 
