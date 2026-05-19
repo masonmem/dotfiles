@@ -1,21 +1,53 @@
 # dotfiles
 
-Personal macOS dev environment — Apple Silicon, zsh, Homebrew. Managed with [chezmoi](https://chezmoi.io).
+Personal macOS dev environment — Apple Silicon, zsh, Homebrew. Managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 ## Bootstrap a new machine
 
 ```bash
 # 1. Install Homebrew, then restore all formulae
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew bundle --file=Brewfile
+brew bundle --file=~/dotfiles/Brewfile
 
-# 2. Install chezmoi and apply dotfiles
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply gh:masonmem/dotfiles
+# 2. Clone and stow
+git clone git@github.com:masonmem/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+stow zsh p10k tmux git nvim lazygit ssh
 ```
 
 ---
 
-## What's managed
+## How stow works
+
+Each subdirectory is a **package**. Running `stow <package>` creates symlinks from `~` into that package, mirroring its directory structure. The actual files live in `~/dotfiles/` — edits there are live immediately, no sync step needed.
+
+```
+~/dotfiles/zsh/.zshrc  →  stow  →  ~/.zshrc  (symlink)
+```
+
+To add a new file: put it in the right package directory, run `stow <package>` again.
+
+To unlink a package (e.g. to temporarily test a change): `stow -D <package>`.
+
+---
+
+## Packages
+
+| Package | What it manages |
+|---------|----------------|
+| `zsh/` | `.zshrc`, `.zprofile`, `.zshenv`, `.config/zsh/**` |
+| `p10k/` | `.p10k.zsh` |
+| `tmux/` | `.tmux.conf` |
+| `git/` | `.gitconfig` |
+| `nvim/` | `.config/nvim/init.lua` |
+| `lazygit/` | `.config/lazygit/config.yml` |
+| `ssh/` | `.ssh/config` |
+
+Repo-level files (`Brewfile`, `docs/`, `README.md`) are not stowed — they live only in the repo.
+
+---
+
+## What each file does
 
 | File | Purpose |
 |------|---------|
@@ -63,19 +95,13 @@ Key tool decisions:
 
 ---
 
-## Updating
+## Editing dotfiles
 
-After editing a managed file, sync it back and push:
-
-```bash
-chezmoi re-add ~/.config/zsh/20-aliases.zsh
-cd ~/.local/share/chezmoi && git add -A && git commit -m "feat: ..." && git push
-```
-
-Or edit directly in the chezmoi source:
+Since stow uses symlinks, you can edit files at their real path (`~/.zshrc`) or directly in the repo (`~/dotfiles/zsh/.zshrc`) — they're the same file. Then just commit and push:
 
 ```bash
-chezmoi edit ~/.zshrc   # opens in $EDITOR, then:
-chezmoi apply           # applies to the real file
+cd ~/dotfiles
+git add -A
+git commit -m "feat: ..."
+git push
 ```
-
