@@ -77,7 +77,7 @@ require("lazy").setup({
     name     = "catppuccin",
     priority = 1000,
     config   = function()
-      vim.cmd.colorscheme("catppuccin-mocha")
+      vim.cmd.colorscheme("catppuccin-macchiato")
     end,
   },
 
@@ -102,7 +102,7 @@ require("lazy").setup({
     "nvim-lualine/lualine.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons", "catppuccin" },
     config = function()
-      require("lualine").setup({ options = { theme = "catppuccin-mocha" } })
+      require("lualine").setup({ options = { theme = "catppuccin-macchiato" } })
     end,
   },
 
