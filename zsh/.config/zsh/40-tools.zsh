@@ -10,7 +10,11 @@ if command -v fzf >/dev/null 2>&1; then
   _fzf_cache="$_zsh_cache/fzf-init.zsh"
   [[ -f "$_fzf_cache" && "$_fzf_cache" -nt "$(command -v fzf)" ]] || fzf --zsh >| "$_fzf_cache"
   source "$_fzf_cache"
-  export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --info=inline'
+  export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --info=inline \
+    --color=bg+:#363a4f,bg:#24273a,spinner:#f4dbd6,hl:#ed8796 \
+    --color=fg:#cad3f5,header:#ed8796,info:#c6a0f6,pointer:#f4dbd6 \
+    --color=marker:#b7bdf8,fg+:#cad3f5,prompt:#c6a0f6,hl+:#ed8796 \
+    --color=selected-bg:#494d64,border:#363a4f,label:#cad3f5'
   # Dirs first, then files — mirrors Finder's "folders on top" behavior
   export FZF_DEFAULT_COMMAND='{ fd --type d --color=never; fd --type f --color=never; } 2>/dev/null'
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"

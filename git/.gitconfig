@@ -11,7 +11,7 @@
 [delta]
     navigate = true           # n/N to jump between changed files in a diff
     line-numbers = true       # show line numbers alongside diffs
-    syntax-theme = Dracula    # matches bat theme
+    syntax-theme = Catppuccin Macchiato
     features = decorations
     dark = true
 

@@ -8,7 +8,7 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
 
 # bat theme (used by bat alias and fzf preview)
-export BAT_THEME="Dracula"
+export BAT_THEME="Catppuccin Macchiato"
 
 # NVM directory (actual load is lazy in 70-nvm.zsh)
 export NVM_DIR="$HOME/.nvm"
