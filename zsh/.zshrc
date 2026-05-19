@@ -34,3 +34,4 @@ done
 
 # ── Prompt ──────────────────────────────────────────────────────────────────
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+\nexport PATH="$HOME/.local/bin:$PATH"
