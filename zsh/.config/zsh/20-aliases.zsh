@@ -1,4 +1,8 @@
-# --- Modern CLI replacements ---
+# --- Editors ---
+alias vi='nvim'
+alias vim='nvim'
+
+
 alias cat='bat --paging=never --style=plain'
 alias ls='eza'
 alias ll='eza -la --git --icons'
