@@ -2,7 +2,8 @@
 # Install CLI tools in a devcontainer (Linux arm64/amd64).
 # Idempotent — safe to run multiple times.
 # Tools are installed to /usr/local/bin.
-set -euo pipefail
+# Each tool installs independently; failures don't block others.
+set -uo pipefail
 
 ARCH=$(uname -m)
 case "$ARCH" in
@@ -92,6 +93,20 @@ if ! installed delta; then
   DELTA_VER=$(curl -sL "https://api.github.com/repos/dandavison/delta/releases/latest" | grep tag_name | cut -d'"' -f4)
   curl -sL "https://github.com/dandavison/delta/releases/download/${DELTA_VER}/delta-${DELTA_VER}-${ARCH_ALT}-unknown-linux-gnu.tar.gz" | tar xz -C "$TMP"
   cp "$TMP/delta-${DELTA_VER}-${ARCH_ALT}-unknown-linux-gnu/delta" "$BIN/"
+fi
+
+# ── kubecolor ────────────────────────────────────────────────────────────────
+if ! installed kubecolor; then
+  echo "Installing kubecolor..."
+  KC_VER=$(curl -sL "https://api.github.com/repos/kubecolor/kubecolor/releases/latest" | grep tag_name | cut -d'"' -f4 | tr -d 'v')
+  curl -sL "https://github.com/kubecolor/kubecolor/releases/download/v${KC_VER}/kubecolor_${KC_VER}_linux_${GOARCH}.tar.gz" | tar xz -C "$TMP"
+  cp "$TMP/kubecolor" "$BIN/"
+fi
+
+# ── tldr ─────────────────────────────────────────────────────────────────────
+if ! installed tldr; then
+  echo "Installing tldr..."
+  pip install --quiet --break-system-packages tldr 2>/dev/null || pip install --quiet tldr
 fi
 
 echo "✓ All devcontainer tools installed"

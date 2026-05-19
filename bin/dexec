@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# dexec — Run a command inside a running devcontainer.
+#
+# Usage:
+#   dexec <command> [args...]        Run command in default container
+#   dexec -c <container> <cmd>       Run in a specific container
+#   dexec -l                         List running devcontainers
+#   dexec                            Open interactive shell in container
+#
+# The default container is detected by looking for containers with
+# the "devcontainer" label, or by DEXEC_CONTAINER env var.
+#
+# Environment:
+#   DEXEC_CONTAINER   Override container name/ID (default: auto-detect)
+#   DEXEC_WORKDIR     Override working directory inside container
+#   DEXEC_USER        Override user (default: root)
+#   DEXEC_SHELL       Shell for interactive mode (default: zsh, fallback: bash)
+
+set -euo pipefail
+
+usage() {
+  sed -n '2,/^$/s/^# \?//p' "$0"
+  exit "${1:-0}"
+}
+
+list_containers() {
+  echo "Running devcontainers:"
+  docker ps --filter "label=devcontainer.local_folder" \
+    --format "  {{.Names}}\t{{.Label \"devcontainer.local_folder\"}}" 2>/dev/null
+  docker ps --filter "name=devenv" \
+    --format "  {{.Names}}\t{{.Status}}" 2>/dev/null
+}
+
+find_container() {
+  # 1. Explicit env var
+  if [[ -n "${DEXEC_CONTAINER:-}" ]]; then
+    echo "$DEXEC_CONTAINER"
+    return
+  fi
+
+  # 2. Look for devcontainer-labeled containers
+  local cid
+  cid=$(docker ps -q --filter "label=devcontainer.local_folder" 2>/dev/null | head -1)
+  if [[ -n "$cid" ]]; then
+    echo "$cid"
+    return
+  fi
+
+  # 3. Fallback: look for common devenv container names
+  for name in nova-lib-devenv devenv dev-container; do
+    if docker ps -q --filter "name=$name" 2>/dev/null | grep -q .; then
+      echo "$name"
+      return
+    fi
+  done
+
+  echo ""
+}
+
+# Parse flags
+CONTAINER=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help) usage 0 ;;
+    -l|--list) list_containers; exit 0 ;;
+    -c|--container) CONTAINER="$2"; shift 2 ;;
+    *) break ;;
+  esac
+done
+
+# Resolve container
+if [[ -z "$CONTAINER" ]]; then
+  CONTAINER=$(find_container)
+fi
+
+if [[ -z "$CONTAINER" ]]; then
+  echo "Error: No running devcontainer found." >&2
+  echo "Start a devcontainer or set DEXEC_CONTAINER." >&2
+  exit 1
+fi
+
+# Verify container is running
+if ! docker inspect --format '{{.State.Running}}' "$CONTAINER" 2>/dev/null | grep -q true; then
+  echo "Error: Container '$CONTAINER' is not running." >&2
+  exit 1
+fi
+
+# Build exec args
+EXEC_ARGS=(-it)
+[[ -n "${DEXEC_USER:-}" ]] && EXEC_ARGS+=(-u "$DEXEC_USER")
+[[ -n "${DEXEC_WORKDIR:-}" ]] && EXEC_ARGS+=(-w "$DEXEC_WORKDIR")
+
+if [[ $# -eq 0 ]]; then
+  # Interactive shell
+  SHELL="${DEXEC_SHELL:-zsh}"
+  exec docker exec "${EXEC_ARGS[@]}" "$CONTAINER" "$SHELL" -l
+else
+  # Run command
+  exec docker exec "${EXEC_ARGS[@]}" "$CONTAINER" "$@"
+fi
