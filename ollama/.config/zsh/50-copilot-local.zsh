@@ -17,6 +17,9 @@
 #   • Ollama is OpenAI-compatible at /v1/chat/completions, so wire-api stays
 #     on the default "completions" (not "responses").
 #   • API key is required by the SDK but unused by Ollama — any string works.
+#   • Token budgets: prompt + output must fit within OLLAMA_CONTEXT_LENGTH
+#     (32768). We give the agent 24K prompt headroom (tool results stack up)
+#     and an 8K output cap, which is plenty for code generation.
 
 copilotp() {
   local model="${COPILOT_MODEL:-qwen3:8b}"
@@ -28,7 +31,8 @@ copilotp() {
   COPILOT_PROVIDER_API_KEY="ollama" \
   COPILOT_PROVIDER_WIRE_API="completions" \
   COPILOT_MODEL="$model" \
-  COPILOT_PROVIDER_MAX_PROMPT_TOKENS="32768" \
+  COPILOT_PROVIDER_MAX_PROMPT_TOKENS="${COPILOT_PROVIDER_MAX_PROMPT_TOKENS:-24576}" \
+  COPILOT_PROVIDER_MAX_OUTPUT_TOKENS="${COPILOT_PROVIDER_MAX_OUTPUT_TOKENS:-8192}" \
   COPILOT_OFFLINE="$offline" \
     command copilot "$@"
 }
