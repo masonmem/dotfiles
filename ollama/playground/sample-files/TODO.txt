@@ -1,0 +1,5 @@
+- [ ] Sort photos into year folders
+- [ ] Archive old invoices to ~/Archive
+- [ ] Delete duplicate downloads
+- [ ] Rename report-* to use YYYY-MM prefix
+- [ ] Move binary blobs out of root
