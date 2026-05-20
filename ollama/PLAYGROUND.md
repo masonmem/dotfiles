@@ -25,6 +25,17 @@ launchctl getenv OLLAMA_FLASH_ATTENTION     # → 1
 curl -s http://localhost:11434/api/tags | jq '.models[].name'
 ```
 
+> **If `launchctl getenv` returns empty:** the LaunchAgent that persists
+> these vars isn't loaded. Fix:
+> ```sh
+> ln -sf ~/dotfiles/ollama/launchagents/com.user.ollama-env.plist \
+>        ~/Library/LaunchAgents/com.user.ollama-env.plist
+> launchctl load -w ~/Library/LaunchAgents/com.user.ollama-env.plist
+> brew services restart ollama
+> ```
+> `launchctl setenv` writes the *live* launchd session — values evaporate at
+> reboot/logout. The bundled LaunchAgent re-applies them at every login.
+
 Quick generation, no agent:
 
 ```sh

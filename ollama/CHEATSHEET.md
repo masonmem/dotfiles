@@ -149,6 +149,18 @@ du -sh ~/.ollama/models            # disk usage
 
 ## Tuning knobs (set via `launchctl setenv`, then restart service)
 
+> **Important:** `launchctl setenv` only writes the **live** launchd session.
+> The vars evaporate on reboot/logout. The repo ships a LaunchAgent
+> (`~/dotfiles/ollama/launchagents/com.user.ollama-env.plist`) that
+> re-applies all six at login. Install once:
+> ```sh
+> ln -sf ~/dotfiles/ollama/launchagents/com.user.ollama-env.plist \
+>        ~/Library/LaunchAgents/com.user.ollama-env.plist
+> launchctl load -w ~/Library/LaunchAgents/com.user.ollama-env.plist
+> brew services restart ollama
+> ```
+> After that, `launchctl getenv OLLAMA_*` returns values across reboots.
+
 | Var | Current | Notes |
 |---|---|---|
 | `OLLAMA_CONTEXT_LENGTH` | 32768 | Max usable ctx; lower for 14B model |

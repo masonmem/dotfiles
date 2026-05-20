@@ -23,13 +23,20 @@ use with your employer.
 brew install ollama
 brew services start ollama
 
-# Persistent runtime tuning (read by both the .app and brew services):
-launchctl setenv OLLAMA_FLASH_ATTENTION 1
-launchctl setenv OLLAMA_KV_CACHE_TYPE q8_0
-launchctl setenv OLLAMA_CONTEXT_LENGTH 32768
-launchctl setenv OLLAMA_KEEP_ALIVE 30m
-launchctl setenv OLLAMA_MAX_LOADED_MODELS 1
-launchctl setenv OLLAMA_NUM_PARALLEL 1
+# Persistent runtime tuning. `launchctl setenv` only writes the LIVE launchd
+# session — it does NOT survive reboot. Install the bundled LaunchAgent so
+# the vars are re-set automatically at every login, then restart ollama so
+# its inherited env picks them up.
+ln -sf ~/dotfiles/ollama/launchagents/com.user.ollama-env.plist \
+       ~/Library/LaunchAgents/com.user.ollama-env.plist
+launchctl load -w ~/Library/LaunchAgents/com.user.ollama-env.plist
+brew services restart ollama
+
+# Verify (all six should be set):
+for v in OLLAMA_FLASH_ATTENTION OLLAMA_KV_CACHE_TYPE OLLAMA_CONTEXT_LENGTH \
+         OLLAMA_KEEP_ALIVE OLLAMA_MAX_LOADED_MODELS OLLAMA_NUM_PARALLEL; do
+  printf "%-30s = %s\n" "$v" "$(launchctl getenv "$v")"
+done
 
 # Models for 16 GB Macs
 ollama pull qwen3:8b
