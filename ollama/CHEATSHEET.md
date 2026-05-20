@@ -44,6 +44,40 @@ vm_stat | awk '/Pages free/||/Pages active/||/swapouts/'
 top -l 1 -o mem -n 10 -stats command,mem,cpu       # what's eating RAM
 ```
 
+## Who is eating RAM? (top 15 by RSS)
+
+```sh
+ps -axm -o pid,ppid,rss,%cpu,comm \
+  | sort -k3 -nr | head -15 \
+  | awk '{printf "%-7s ppid=%-6s %7.1f MB  %4s%%cpu  %s\n",$1,$2,$3/1024,$4,$5}'
+```
+
+## Stuck VS Code `rg` reaper
+
+VS Code extensions (Tailwind IntelliSense, TS/JS language features) sometimes
+leave ripgrep processes running for hours. Each is small (~5 MB), but a
+swarm of them holds FDs and adds up.
+
+```sh
+# See them and how long they've been running
+ps -ax -o pid,ppid,etime,command \
+  | awk 'NR==1 || /@vscode\/ripgrep\/bin\/rg/'
+
+# Kill the lot (VS Code respawns fresh ones if it actually needs them)
+pgrep -fl '@vscode/ripgrep/bin/rg' | awk '{print $1}' | xargs kill 2>/dev/null
+
+# If a plain kill doesn't take:
+pgrep -fl '@vscode/ripgrep/bin/rg' | awk '{print $1}' | xargs kill -9
+```
+
+Prevent the swarm in the first place — add to VS Code `settings.json`:
+```json
+{
+  "search.followSymlinks": false,
+  "search.useGlobalIgnoreFiles": true
+}
+```
+
 ## Streaming smoke test (bypasses copilot entirely)
 
 ```sh
