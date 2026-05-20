@@ -57,6 +57,7 @@ Each subdirectory is a **package**. Running `stow <package>` creates symlinks fr
 | `nvim/`    | `.config/nvim/init.lua`                            | ✅ Yes                |
 | `lazygit/` | `.config/lazygit/config.yml`                       | ✅ Yes                |
 | `atuin/`   | `.config/atuin/config.toml`, themes                | ✅ Yes                |
+| `ollama/`  | Local Ollama + `copilotp` private wrapper          | Opt-in (see `ollama/README.md`) |
 | `ssh/`     | `.ssh/config`                                      | ❌ Template only      |
 
 > **`ssh/` is not stowed** — SSH configs contain machine-specific hosts, keys, and algorithms. Keep `~/.ssh/config` local on each machine. The `ssh/` package is a reference template for bootstrapping new machines (`cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config`, then edit).
