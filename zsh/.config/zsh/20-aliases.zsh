@@ -13,6 +13,9 @@ alias lt='eza --tree --icons --group-directories-first'
 alias kubectl='kubecolor'
 alias k='kubectl'
 
+# --- Python ---
+alias pip='pip3'
+
 # --- Git ---
 alias lg='lazygit'
 alias tldr='tldr --color'
