@@ -32,6 +32,7 @@ brew "git-delta"                           # syntax-highlighted diff pager
 brew "git-lfs"                             # large file storage
 brew "gh"                                  # GitHub CLI
 brew "jesseduffield/lazygit/lazygit"       # terminal UI for git
+brew "lazydocker"                          # terminal UI for docker (k9s-like)
 
 # ── Editors ──────────────────────────────────────────────────────────────────
 brew "neovim"                              # modern vim
@@ -56,6 +57,12 @@ brew "ffmpeg"                              # video/audio processing
 brew "yt-dlp"                              # video downloader
 brew "iperf3"                              # network bandwidth testing
 brew "qrencode"                            # QR code generator
+
+# ── LLM / AI tooling ─────────────────────────────────────────────────────────
+brew "ollama"                              # local LLM runtime (server lives on solaris)
+brew "aider"                               # AI pair programming in the terminal
+brew "opencode"                            # terminal-native AI coding agent
+brew "llm"                                 # Simon Willison's CLI for talking to LLMs
 
 # ── Applications ─────────────────────────────────────────────────────────────
 cask "docker-desktop"
