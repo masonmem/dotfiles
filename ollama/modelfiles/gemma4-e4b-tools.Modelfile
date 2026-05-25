@@ -11,7 +11,7 @@
 #   Dropping temperature to 0.2 dramatically reduces this confabulation
 #   without hurting general chat quality. top_p / top_k tightened to match.
 #
-#   This variant is the default for copilotp, .aider.conf.yml, and the
+#   This variant is the default for opencode/aider in the local-LLM
 #   opencode `gemma4:e4b` model entry.
 #
 # Notes:

@@ -18,7 +18,7 @@ set -euo pipefail
 SECRETS_DIR="$HOME/.copilot/secrets"
 GATEWAY="${LITELLM_BASE_URL:-https://llm.hyperionx.dev/v1}"
 GATEWAY_ROOT="${GATEWAY%/v1}"
-DEFAULT_TOOLS=(copilotp opencode aider openwebui master-key)
+DEFAULT_TOOLS=(opencode aider openwebui master-key)
 
 _file_for() { echo "$SECRETS_DIR/litellm-$1.txt"; }
 _kc_service() { echo "litellm-$1"; }

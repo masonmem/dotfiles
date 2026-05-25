@@ -1,8 +1,8 @@
 # ── LiteLLM gateway (solaris) — single OpenAI-compatible endpoint ──────────
 #
 # Loads per-tool LiteLLM virtual keys into <TOOL>_LITELLM_KEY env vars so
-# copilotp / opencode / aider / etc. can authenticate without each having
-# its own bespoke secret-loading code.
+# opencode / aider / etc. can authenticate without each having its own
+# bespoke secret-loading code.
 #
 # Two-tier lookup, file first then Keychain:
 #   1. ~/.copilot/secrets/litellm-<tool>.txt  (chmod 600, gitignored)
@@ -30,16 +30,16 @@ _litellm_load_key() {
   [[ -n "$val" ]] && export "$var=$val"
 }
 
-_litellm_load_key copilotp COPILOTP_LITELLM_KEY
 _litellm_load_key opencode OPENCODE_LITELLM_KEY
 _litellm_load_key aider    AIDER_LITELLM_KEY
 
 unfunction _litellm_load_key
 
-# OpenAI-compatible env for ad-hoc tooling. Default to copilotp's key —
-# it's the broadest-use one. aider has its own wrapper that overrides.
-if [[ -n "${COPILOTP_LITELLM_KEY:-}" ]]; then
+# OpenAI-compatible env for ad-hoc tooling (curl, scripts, etc.). Default
+# to opencode's key — broadest-use of the remaining tools. aider has its
+# own wrapper that overrides OPENAI_API_KEY per-call.
+if [[ -n "${OPENCODE_LITELLM_KEY:-}" ]]; then
   export OPENAI_BASE_URL="$LITELLM_BASE_URL"
   export OPENAI_API_BASE="$OPENAI_BASE_URL"
-  export OPENAI_API_KEY="$COPILOTP_LITELLM_KEY"
+  export OPENAI_API_KEY="$OPENCODE_LITELLM_KEY"
 fi

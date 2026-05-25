@@ -3,9 +3,20 @@
 Opt-in zsh configuration for a local LLM workflow on macOS:
 
 - Ollama tuning env vars for Apple Silicon (`15-ollama.zsh`)
-- `copilotp` zsh function: GitHub Copilot CLI wrapper that routes inference
-  through Ollama (BYOK) and runs in `COPILOT_OFFLINE=true` mode by default
-  (`50-copilot-local.zsh`)
+- LiteLLM gateway env: loads per-tool virtual keys into env vars; sets
+  `OPENAI_BASE_URL`/`OPENAI_API_KEY` for ad-hoc OpenAI-SDK use
+  (`16-llm-gateway.zsh`)
+- `aider` wrapper that injects `OPENAI_API_KEY=$AIDER_LITELLM_KEY`
+  per-call (aider's YAML doesn't expand env vars) (`60-aider-wrapper.zsh`)
+- `litellm-keys` CLI: list / push / pull / mint / revoke per-tool LiteLLM
+  virtual keys; bridges file cache and macOS Keychain
+  (`bin/litellm-keys`)
+
+> **Retired (May 2026):** the `copilotp` zsh function (wrapper around
+> GitHub Copilot CLI for local-model inference) is gone. Small local
+> models never produced reliable tool calls in the Copilot CLI harness.
+> Use `opencode` for local-LLM work; the stock `copilot` CLI is for the
+> GitHub-hosted cloud models.
 
 This package is **not** stowed automatically by the bootstrap. Personal
 machines opt in explicitly:
@@ -51,43 +62,46 @@ ollama pull qwen3:8b          # pure-chat option (no tools)
 
 | Command | Behavior |
 |---|---|
-| `copilot` | Unchanged — GitHub Copilot **cloud** session (Claude/GPT-*) |
-| `copilotc` | Explicit alias for the cloud session; useful in scripts |
-| `copilotp` | **Private** session via local Ollama; sets `COPILOT_PROVIDER_*` and `COPILOT_OFFLINE=true`. Default model: `granite4.1:8b` (cleanest agentic tool calls). Also passes `--effort none` and excludes cloud-only / sub-agent tools (`task`, `sql`, `skill`, `report_intent`, `fetch_copilot_cli_documentation`, `read_agent`, `list_agents`) which routinely confuse small local models. |
-| `COPILOT_MODEL=gemma4:e4b-tools copilotp` | Same, but using a different local model |
-| `COPILOT_PRIVATE_ONLINE=1 copilotp` | Local inference but **keep** GitHub plumbing (`/pr`, `/delegate`, GitHub MCP) |
+| `opencode` | TUI agent against LiteLLM gateway. `Ctrl-M` switches model. Default: `local/granite4.1-8b`. |
+| `aider` | Diff-driven editor. Shell wrapper injects `OPENAI_API_KEY` per-call. Default: `openai/local/gemma4-e4b`. |
+| `litellm-keys list` / `mint <tool>` / `revoke <tool>` / `push` / `pull` | Manage per-tool LiteLLM virtual keys (file ↔ Keychain). |
 
-### Model picks for `copilotp` (16 GB Mac)
+See `homelab/docs/llm-clients.md` for how the gateway, virtual keys,
+and BYOK Anthropic plumbing fit together.
+
+### Model picks (16 GB Mac)
+
+These notes are about the **models** themselves; choose them in
+opencode's picker (`Ctrl-M`) or aider's `--model openai/local/<name>`.
 
 | Model | Why pick it |
 |---|---|
-| `granite4.1:8b` (**current default**) | IBM Apache-2.0, ~5 GB. In a May 2026 head-to-head Copilot CLI bench against `gemma4:e4b-tools` and `qwen3.5:4b`, only granite made clean tool calls (`glob`, `view`) without inventing tool names. Trained against OpenAI-style tool schemas. |
+| `granite4.1:8b` (default for agentic work) | IBM Apache-2.0, ~5 GB. In a May 2026 head-to-head bench against `gemma4:e4b-tools` and `qwen3.5:4b`, only granite made clean tool calls without inventing tool names. Trained against OpenAI-style tool schemas. |
 | `gemma4:e4b-tools` | Custom Modelfile variant (`modelfiles/gemma4-e4b-tools.Modelfile`) of `gemma4:e4b` with temperature lowered to 0.2 to reduce tool-name confabulation. Stock `gemma4:e4b` ships at temperature=1.0 which causes it to invent tool names like `google_search` / `view_directory`. Apache-2.0, multimodal, native 256K context, ~27 tok/s warm. Great for chat / code-writing; less reliable than granite in multi-step agent loops. |
 | `gemma4:e4b` | Untuned base. Use for one-shot chat where you want maximum creativity. |
-| `qwen2.5-coder:7b` (older default) | Stable, ~25 tok/s. Note: emits function calls as JSON inside `content` rather than the OpenAI `tool_calls` field. |
-| `qwen3:8b` | Better reasoning/chat, but `<think>` blocks corrupt tool calls over Ollama's OpenAI-compatible endpoint — prefer for non-tool chat |
-| `qwen3.5:4b` | Newer Qwen with tools+thinking+vision, tiny (~3.4 GB). In the bench it emitted XML-style `<search_files>` tags that ollama's tool-parser can't extract — wrong agent harness. Useful for chat. |
-| `qwen3:14b` | Higher quality, ~15–22 tok/s (cap context at 8K to fit) |
-| `granite3.3:8b` | Superseded by 4.1; kept for comparison |
-| `gemma4:26b` (removed) | Pulled and removed because 18 GB resident size forces partial-GPU split on 16 GB Macs and warm gens stall. |
+| `qwen2.5-coder:7b` | Stable, ~25 tok/s. Note: emits function calls as JSON inside `content` rather than the OpenAI `tool_calls` field. |
+| `qwen3:8b` | Better reasoning/chat, but `<think>` blocks corrupt tool calls over Ollama's OpenAI-compatible endpoint — prefer for non-tool chat. |
+| `qwen3.5:4b` | Newer Qwen with tools+thinking+vision, tiny (~3.4 GB). Emits XML-style `<search_files>` tags that ollama's tool-parser can't extract — useful for chat. |
+| `qwen3:14b` | Higher quality, ~15–22 tok/s (cap context at 8K to fit). |
+| `granite3.3:8b` | Superseded by 4.1; kept for comparison. |
+| `gemma4:26b` (removed) | 18 GB resident forces partial-GPU split on 16 GB Macs; warm gens stall. |
 
-### Tool calling reality check (May 2026, ollama 0.24, Copilot CLI 1.0.51)
+### Tool calling reality check (May 2026, ollama 0.24)
 
-Verified end-to-end through Copilot CLI's BYOK path with the same agentic
-prompt and full 10-tool catalog (after the `copilotp` exclusions). Captured
+Verified end-to-end against agentic prompts with a full tool catalog,
 via a localhost proxy logging real request bodies:
 
 | Model | Real tool calls? | Notes |
 |---|---|---|
-| `granite4.1:8b` | ✅ clean | Called `glob`, then `view "."`. Only "failure" was choosing to `view "/"` which Copilot CLI's path policy blocked — model behavior was correct, the call was real. |
-| `gemma4:e4b-tools` | ⚠️ unreliable | Even with temp=0.2 and an anti-confabulation instruction in `~/.copilot/copilot-instructions.md`, still invents tool names (`google_search`, `view_file_list_`, `google_cloud-ai_list_files`) about a third of the time. Fine for chat, not for agent loops. |
-| `gemma4:e4b` (stock) | ❌ broken | Stock temperature=1.0 → invents a different fake tool name almost every turn. |
-| `qwen3.5:4b` | ❌ wrong harness | Emits XML-style `<search_files>` tags instead of OpenAI `tool_calls`; ollama's parser drops the call. |
-| `qwen2.5-coder:7b` | ⚠️ wrong field | Emits the call as JSON in `content`. Copilot CLI tolerates this; downstream clients expecting `tool_calls` will miss it. |
+| `granite4.1:8b` | ✅ clean | Called `glob`, then `view "."`. |
+| `gemma4:e4b-tools` | ⚠️ unreliable | Even with temp=0.2 still invents tool names about a third of the time. Fine for chat, not agent loops. |
+| `gemma4:e4b` (stock) | ❌ broken | temperature=1.0 → invents a different fake tool name almost every turn. |
+| `qwen3.5:4b` | ❌ wrong harness | Emits XML-style `<search_files>` tags instead of OpenAI `tool_calls`. |
+| `qwen2.5-coder:7b` | ⚠️ wrong field | Emits the call as JSON in `content`; tolerant clients work, strict ones don't. |
 
-**Takeaway:** Copilot CLI was designed for frontier models that don't
-confabulate. The 4-8B class is genuinely hit-and-miss at agentic tool
-loops; `granite4.1:8b` is the most reliable local option we found.
+**Takeaway:** the 4–8B class is genuinely hit-and-miss at agentic tool
+loops. `granite4.1:8b` is the most reliable local option for opencode
+agent work; reach for `cloud/sonnet` when the task is non-trivial.
 
 ### Suppressing Qwen3 thinking
 
@@ -106,10 +120,10 @@ ollama run qwen3:8b --think=false "Say hi in 5 words"   # one-shot CLI
 `--hidethinking` is **not** the same: the model still reasons internally,
 the trace is just suppressed in output (saves clutter, not latency).
 
-Copilot CLI's BYOK path talks to the OpenAI-compatible endpoint
-(`/v1/chat/completions`) and does not expose a `think` toggle, so for
-guaranteed no-think behavior inside `copilotp` agent loops with qwen3,
-you'd need to drop to `qwen2.5-coder:7b` (no thinking mode at all).
+LiteLLM's gateway talks to ollama's OpenAI-compatible endpoint
+(`/v1/chat/completions`) and does not expose a `think` toggle. For
+guaranteed no-think behavior with qwen3 through opencode/aider, drop
+to `qwen2.5-coder:7b` (no thinking mode at all).
 
 **Gemma 4 is different:** the `/v1/chat/completions` endpoint *does*
 honor `reasoning_effort: "none"` for `gemma4:*`. Thinking output also
