@@ -1,63 +1,69 @@
-# ── copilotp — private GitHub Copilot CLI session backed by local Ollama ────
+# ── copilotp — private GitHub Copilot CLI session backed by local LLMs ──────
 #
-# Two commands are provided:
+# Two commands:
 #   • copilot   — unchanged, hits GitHub Copilot cloud (Claude/GPT-*)
 #   • copilotp  — wraps copilot with BYOK env vars + COPILOT_OFFLINE=true so
-#                 inference runs entirely against Ollama on this machine.
+#                 inference runs against our LiteLLM gateway (solaris ollama).
+#
+# Wiring (default): routes through https://llm.hyperionx.dev/v1 using a
+# per-tool LiteLLM virtual key at ~/.copilot/secrets/litellm-copilotp.txt.
+# That gateway forwards to ollama on solaris. Requires Tailscale; the
+# *.hyperionx.dev domain resolves to the tailnet CGNAT addr.
+#
+# Escape hatch (works ONLY when running on solaris itself, where ollama is
+# bound to localhost:11434):
+#   COPILOT_DIRECT=1 copilotp
 #
 # Usage:
-#   copilotp                         # private interactive session, qwen3:8b
+#   copilotp                                          # default, granite4.1
 #   copilotp -p "..." --allow-tool='shell(ls:*)'
-#   COPILOT_MODEL=qwen2.5-coder:7b copilotp
-#   COPILOT_PRIVATE_ONLINE=1 copilotp    # local inference, keep GitHub plumbing
+#   COPILOT_MODEL=local/qwen2.5-coder-7b copilotp
+#   COPILOT_PRIVATE_ONLINE=1 copilotp                 # keep GitHub plumbing on
 #
-# Notes:
-#   • COPILOT_OFFLINE=true requires COPILOT_PROVIDER_BASE_URL to be set;
-#     it disables GitHub auth, telemetry, web tools, and the GitHub MCP server.
-#   • Ollama is OpenAI-compatible at /v1/chat/completions, so wire-api stays
-#     on the default "completions" (not "responses").
-#   • API key is required by the SDK but unused by Ollama — any string works.
-#   • Token budgets: prompt + output must fit within OLLAMA_CONTEXT_LENGTH
-#     (32768). We give the agent 24K prompt headroom (tool results stack up)
-#     and an 8K output cap, which is plenty for code generation.
-
-# Default model: granite4.1:8b
-#   - Picked May 2026 after head-to-head bench with gemma4:e4b-tools and
-#     qwen3.5:4b on Copilot CLI's agentic loop ("list files and describe"
-#     against the real 10-tool catalog after exclusions):
-#       granite4.1:8b   → 3 clean tool calls (glob, view, view), no confab
-#       gemma4:e4b-tools → 0 tool calls, just shrugged
-#       qwen3.5:4b      → emitted XML <search_files> tags (wrong harness),
-#                          ollama tool-parser couldn't extract a call
-#   - granite4.1 (IBM, Apache-2.0) is "tools"-tagged on ollama.com and is
-#     trained against OpenAI-style tool schemas, so it actually uses tools
-#     from the provided catalog instead of inventing google_search,
-#     view_file_list_, etc. ~5 GB; comfortably fits with headroom on 16 GB.
-#   - Use gemma4:e4b-tools for chat/code-writing tasks where you want
-#     better prose/explanations and don't need clean agentic loops.
+# Excluded tools (cloud-only / unhelpful for small local models):
+#   task, read_agent, list_agents — sub-agent spawning would recurse the
+#     small model into itself
+#   skill, fetch_copilot_cli_documentation — cloud features
+#   sql — eats context for little benefit at this scale
+#   report_intent — UI-only signal
 #
-# Excluded tools (--excluded-tools):
-#   Cloud-only or routinely confusing for small local models:
-#     task, read_agent, list_agents  — sub-agent spawning (would re-invoke
-#       the local model recursively; useless on small models)
-#     skill                           — built-in Copilot skills (cloud)
-#     sql                             — session SQLite; eats context with
-#                                       little benefit at this model size
-#     fetch_copilot_cli_documentation — cloud doc fetch
-#     report_intent                   — UI-only signaling
-#
-# Fallbacks if granite misbehaves on a session:
-#   COPILOT_MODEL=gemma4:e4b-tools  copilotp   # chattier; flaky on tools
-#   COPILOT_MODEL=qwen2.5-coder:7b  copilotp   # old default
-#   COPILOT_MODEL=qwen3:8b          copilotp   # pure chat
+# Model names follow LiteLLM's `local/*` namespace (see
+# homelab/solaris/litellm/config.yaml). Fallbacks: local/gemma4-e4b,
+# local/qwen2.5-coder-7b, local/qwen3-8b.
 copilotp() {
-  local model="${COPILOT_MODEL:-granite4.1:8b}"
+  local model="${COPILOT_MODEL:-local/granite4.1-8b}"
   local offline="true"
   [[ -n "${COPILOT_PRIVATE_ONLINE:-}" ]] && offline="false"
 
-  COPILOT_PROVIDER_BASE_URL="http://localhost:11434/v1" \
+  local base_url api_key
+  if [[ -n "${COPILOT_DIRECT:-}" ]]; then
+    base_url="http://localhost:11434/v1"
+    api_key="ollama"
+    # Strip the local/ prefix that LiteLLM uses; ollama wants the raw name.
+    model="${model#local/}"
+    # Translate hyphen-style names back to ollama's colon-tag style.
+    case "$model" in
+      granite4.1-8b)        model="granite4.1:8b" ;;
+      gemma4-e4b)           model="gemma4:e4b" ;;
+      qwen2.5-coder-7b)     model="qwen2.5-coder:7b" ;;
+      qwen3-8b)             model="qwen3:8b" ;;
+      qwen3-14b)            model="qwen3:14b" ;;
+    esac
+  else
+    base_url="${COPILOT_LITELLM_BASE_URL:-https://llm.hyperionx.dev/v1}"
+    local key_file="${COPILOT_LITELLM_KEY_FILE:-$HOME/.copilot/secrets/litellm-copilotp.txt}"
+    if [[ ! -r "$key_file" ]]; then
+      print -u2 "copilotp: missing LiteLLM virtual key at $key_file"
+      print -u2 "  Mint one with: curl -X POST $base_url/key/generate -H 'Authorization: Bearer \$LITELLM_MASTER_KEY' \\"
+      print -u2 "                  -H 'Content-Type: application/json' -d '{\"models\":[\"local/*\",\"cloud/*\"],\"key_alias\":\"copilotp\"}'"
+      return 1
+    fi
+    api_key="$(<"$key_file")"
+  fi
+
+  COPILOT_PROVIDER_BASE_URL="$base_url" \
   COPILOT_PROVIDER_TYPE="openai" \
-  COPILOT_PROVIDER_API_KEY="ollama" \
+  COPILOT_PROVIDER_API_KEY="$api_key" \
   COPILOT_PROVIDER_WIRE_API="completions" \
   COPILOT_MODEL="$model" \
   COPILOT_PROVIDER_MAX_PROMPT_TOKENS="${COPILOT_PROVIDER_MAX_PROMPT_TOKENS:-24576}" \

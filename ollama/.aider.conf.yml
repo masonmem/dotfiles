@@ -1,19 +1,22 @@
 # Aider config (stowed from ~/dotfiles/ollama).
 #
-# Aider uses LiteLLM under the hood and talks to Ollama via the
-# `ollama_chat/` provider prefix. Make sure OLLAMA_API_BASE is exported
-# (the ollama zsh package handles this).
+# Routes through the LiteLLM gateway on solaris (https://llm.hyperionx.dev)
+# so model selection is consistent across copilotp/opencode/aider. The
+# AIDER_LITELLM_KEY env var (exported by 16-llm-gateway.zsh from
+# ~/.copilot/secrets/litellm-aider.txt) is the per-tool virtual key.
 #
-# Default to gemma4:e4b-tools — a local Modelfile variant of gemma4:e4b
-# with temperature/top_p/top_k tightened (see
-# ../modelfiles/gemma4-e4b-tools.Modelfile). Stock gemma4:e4b runs at
-# temperature=1.0 which produces inconsistent code edits; the tuned
-# variant is much steadier without losing chat quality. Apache-2.0,
-# multimodal, 256K ctx, ~27 tok/s warm on a 16 GB M1 Pro.
-# Aider is diff-driven so tool-call wire format is irrelevant here.
-# qwen3:8b stays as the "weak model" for commit messages / repo summaries.
+# Models use the `openai/local/*` form because LiteLLM speaks OpenAI on the
+# wire and the upstream model name is `local/<short>` (see
+# homelab/solaris/litellm/config.yaml).
+#
+# Default: local/gemma4-e4b (the low-temp tools variant). Multimodal,
+# 256K ctx, ~27 tok/s warm. Diff-driven edits, so tool-call wire
+# format is irrelevant. qwen3:8b → local/qwen3-8b for commit
+# messages / repo summaries.
 
-model: ollama_chat/gemma4:e4b-tools
-weak-model: ollama_chat/qwen3:8b
+model: openai/local/gemma4-e4b
+weak-model: openai/local/qwen3-8b
 edit-format: diff
 auto-commits: false
+openai-api-base: https://llm.hyperionx.dev/v1
+openai-api-key: ${AIDER_LITELLM_KEY}
