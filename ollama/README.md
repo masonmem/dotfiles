@@ -101,7 +101,7 @@ via a localhost proxy logging real request bodies:
 
 **Takeaway:** the 4–8B class is genuinely hit-and-miss at agentic tool
 loops. `granite4.1:8b` is the most reliable local option for opencode
-agent work; reach for `cloud/sonnet` when the task is non-trivial.
+agent work; reach for `cloud/sonnet-4.5` when the task is non-trivial.
 
 ### Suppressing Qwen3 thinking
 
