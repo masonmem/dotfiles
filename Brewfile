@@ -58,6 +58,11 @@ brew "yt-dlp"                              # video downloader
 brew "iperf3"                              # network bandwidth testing
 brew "qrencode"                            # QR code generator
 
+# ── Homelab GitOps (masonmem/homelab + Komodo) ───────────────────────────────
+brew "gitleaks"                            # secret-scanning, runs in homelab CI
+brew "sops"                                # encrypted secrets for solaris stacks
+brew "age"                                 # SOPS encryption backend (per-host + admin keys)
+
 # ── LLM / AI tooling ─────────────────────────────────────────────────────────
 brew "ollama"                              # local LLM runtime (server lives on solaris)
 brew "aider"                               # AI pair programming in the terminal
