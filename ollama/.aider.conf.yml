@@ -9,10 +9,10 @@
 # wire and the upstream model name is `local/<short>` (see
 # homelab/solaris/litellm/config.yaml).
 #
-# Default: local/gemma4-e4b — tighter sampler, multimodal, 256K ctx.
+# Default: local/gemma4-e4b-0x — tighter sampler, multimodal, 256K ctx.
 # Weak model (commit msgs / repo summaries): local/qwen3-8b.
 
-model: openai/local/gemma4-e4b
+model: openai/local/gemma4-e4b-0x
 weak-model: openai/local/qwen3-8b
 edit-format: diff
 auto-commits: false

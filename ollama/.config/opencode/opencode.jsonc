@@ -6,24 +6,23 @@
   // virtual key $OPENCODE_LITELLM_KEY (exported by 16-llm-gateway.zsh
   // from ~/.copilot/secrets/litellm-opencode.txt).
   //
-  // Model names mirror homelab/solaris/litellm/config.yaml:
-  //   • `local/*` — ollama models on solaris
-  //   • `cloud/*` — BYOK providers (currently Anthropic only)
+  // Model ids mirror homelab/solaris/litellm/config.yaml. The id IS
+  // the display name — no `name` override here — so opencode and Open
+  // WebUI show identical strings (e.g. `cloud/sonnet-4.5-3x`). The
+  // `-Nx` suffix is the cost tier baked into the id; see
+  // homelab/docs/models.md § "Cost-tier suffix".
   //
-  // To add a model:
-  //   1. (local) `ollama pull <name>` on solaris, add to litellm config.yaml.
-  //   2. (cloud) add a model_list entry + provider key in periphery secrets.
-  //   3. Add a matching entry below so it shows up in the picker.
+  // To add a model: add it to litellm/config.yaml first with the
+  // `-Nx` suffix, then add a matching entry below (no `name` field).
   //
   // `enabled_providers` is an allowlist — without it, opencode would
   // auto-detect every provider whose env var is set (OPENAI_API_KEY,
   // ANTHROPIC_API_KEY, …) and clutter the picker with hundreds of
-  // models we don't host. See:
-  // https://github.com/sst/opencode — provider/provider.ts.
+  // models we don't host.
   //
   // Default model: granite4.1-8b — in a Copilot CLI bench it made the
-  // cleanest tool calls (glob/view) vs gemma4:e4b-tools and qwen3.5:4b.
-  // For non-local: switch to cloud/sonnet-4.5 via `/models` in the TUI.
+  // cleanest tool calls vs gemma4:e4b-tools and qwen3.5:4b. For non-
+  // local: switch to cloud/sonnet-4.5-3x via `/models` in the TUI.
   "$schema": "https://opencode.ai/config.json",
   "enabled_providers": ["litellm"],
   "provider": {
@@ -35,61 +34,20 @@
         "apiKey": "{env:OPENCODE_LITELLM_KEY}"
       },
       "models": {
-        "cloud/opus-4.5": {
-          "name": "[15x] cloud/opus-4.5 — Claude Opus 4.5 (premium)",
-          "tools": true
-        },
-        "cloud/sonnet-4.5": {
-          "name": "[3x] cloud/sonnet-4.5 — Claude Sonnet 4.5",
-          "tools": true
-        },
-        "cloud/haiku-4.5": {
-          "name": "[1x] cloud/haiku-4.5 — Claude Haiku 4.5 (cheapest cloud)",
-          "tools": true
-        },
-        "local/granite4.1-8b": {
-          "name": "[0x] local/granite4.1-8b — IBM Granite 4.1 8B (default, best tool calls)",
-          "tools": true,
-          "options": { "temperature": 0.2 }
-        },
-        "local/gemma4-e4b": {
-          "name": "[0x] local/gemma4-e4b — Google Gemma 4 E4B (multimodal, 256K ctx)",
-          "tools": true,
-          "options": { "temperature": 0.2, "reasoning_effort": "none" }
-        },
-        "local/qwen2.5-coder-7b": {
-          "name": "[0x] local/qwen2.5-coder-7b — Qwen2.5 Coder 7B (no thinking)",
-          "tools": true,
-          "options": { "temperature": 0.2 }
-        },
-        "local/qwen3-14b": {
-          "name": "[0x] local/qwen3-14b — Qwen3 14B (smarter, slower)",
-          "tools": true,
-          "options": { "temperature": 0.4 }
-        },
-        "local/qwen3-abliterated-8b": {
-          "name": "[0x] local/qwen3-abliterated-8b — Qwen3 8B (uncensored)",
-          "tools": true,
-          "options": { "temperature": 0.4 }
-        },
-        "local/deepseek-r1-14b": {
-          "name": "[0x] local/deepseek-r1-14b — DeepSeek R1 14B (reasoning)",
-          "tools": true,
-          "options": { "temperature": 0.4 }
-        },
-        "local/llama3.2-vision-11b": {
-          "name": "[0x] local/llama3.2-vision-11b — Llama 3.2 Vision 11B",
-          "tools": true,
-          "options": { "temperature": 0.3 }
-        },
-        "local/dolphin3-8b": {
-          "name": "[0x] local/dolphin3-8b — Dolphin 3 8B (uncensored chat)",
-          "tools": true,
-          "options": { "temperature": 0.4 }
-        }
+        "cloud/opus-4.5-15x":        { "tools": true },
+        "cloud/sonnet-4.5-3x":       { "tools": true },
+        "cloud/haiku-4.5-1x":        { "tools": true },
+        "local/granite4.1-8b-0x":    { "tools": true, "options": { "temperature": 0.2 } },
+        "local/gemma4-e4b-0x":       { "tools": true, "options": { "temperature": 0.2, "reasoning_effort": "none" } },
+        "local/qwen2.5-coder-7b-0x": { "tools": true, "options": { "temperature": 0.2 } },
+        "local/qwen3-14b-0x":        { "tools": true, "options": { "temperature": 0.4 } },
+        "local/qwen3-abliterated-8b-0x": { "tools": true, "options": { "temperature": 0.4 } },
+        "local/deepseek-r1-14b-0x":  { "tools": true, "options": { "temperature": 0.4 } },
+        "local/llama3.2-vision-11b-0x": { "tools": true, "options": { "temperature": 0.3 } },
+        "local/dolphin3-8b-0x":      { "tools": true, "options": { "temperature": 0.4 } }
       }
     }
   },
-  "model": "litellm/local/granite4.1-8b",
-  "small_model": "litellm/local/granite4.1-8b"
+  "model": "litellm/local/granite4.1-8b-0x",
+  "small_model": "litellm/local/granite4.1-8b-0x"
 }

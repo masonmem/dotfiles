@@ -62,8 +62,8 @@ ollama pull qwen3:8b          # pure-chat option (no tools)
 
 | Command | Behavior |
 |---|---|
-| `opencode` | TUI agent against LiteLLM gateway. `Ctrl-M` switches model. Default: `local/granite4.1-8b`. |
-| `aider` | Diff-driven editor. Shell wrapper injects `OPENAI_API_KEY` per-call. Default: `openai/local/gemma4-e4b`. |
+| `opencode` | TUI agent against LiteLLM gateway. `Ctrl-M` switches model. Default: `local/granite4.1-8b-0x`. |
+| `aider` | Diff-driven editor. Shell wrapper injects `OPENAI_API_KEY` per-call. Default: `openai/local/gemma4-e4b-0x`. |
 | `litellm-keys list` / `mint <tool>` / `revoke <tool>` / `push` / `pull` | Manage per-tool LiteLLM virtual keys (file ↔ Keychain). |
 
 See `homelab/docs/llm-clients.md` for how the gateway, virtual keys,
@@ -101,7 +101,7 @@ via a localhost proxy logging real request bodies:
 
 **Takeaway:** the 4–8B class is genuinely hit-and-miss at agentic tool
 loops. `granite4.1:8b` is the most reliable local option for opencode
-agent work; reach for `cloud/sonnet-4.5` when the task is non-trivial.
+agent work; reach for `cloud/sonnet-4.5-3x` when the task is non-trivial.
 
 ### Suppressing Qwen3 thinking
 
