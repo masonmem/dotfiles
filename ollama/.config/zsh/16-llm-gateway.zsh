@@ -35,11 +35,14 @@ _litellm_load_key aider    AIDER_LITELLM_KEY
 
 unfunction _litellm_load_key
 
-# OpenAI-compatible env for ad-hoc tooling (curl, scripts, etc.). Default
-# to opencode's key — broadest-use of the remaining tools. aider has its
-# own wrapper that overrides OPENAI_API_KEY per-call.
-if [[ -n "${OPENCODE_LITELLM_KEY:-}" ]]; then
-  export OPENAI_BASE_URL="$LITELLM_BASE_URL"
-  export OPENAI_API_BASE="$OPENAI_BASE_URL"
-  export OPENAI_API_KEY="$OPENCODE_LITELLM_KEY"
-fi
+# Deliberately NOT exporting OPENAI_API_KEY globally:
+#   opencode auto-detects providers from env vars and would silently
+#   light up its built-in "OpenAI" catalog (gpt-4o, gpt-5, …) on top of
+#   the LiteLLM provider configured in opencode.jsonc — polluting the
+#   model picker with models we don't host. opencode reads the gateway
+#   key from $OPENCODE_LITELLM_KEY via the `{env:…}` placeholder in its
+#   config; aider uses its own shell wrapper (60-aider-wrapper.zsh).
+#
+# For ad-hoc curl / scripts, set explicitly per-invocation, e.g.:
+#   OPENAI_BASE_URL=$LITELLM_BASE_URL OPENAI_API_KEY=$OPENCODE_LITELLM_KEY \
+#       curl "$LITELLM_BASE_URL/models" -H "Authorization: Bearer $OPENAI_API_KEY"

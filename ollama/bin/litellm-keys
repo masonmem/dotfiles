@@ -70,9 +70,17 @@ cmd_mint() {
   curl -fsS -X POST "$GATEWAY_ROOT/key/delete" \
     -H "Authorization: Bearer $master" -H "Content-Type: application/json" \
     -d "{\"key_aliases\":[\"$tool\"]}" >/dev/null 2>&1 || true
+  # No `models` scope: LiteLLM's wildcard expansion only works for
+  # providers in its built-in catalog (openai/, anthropic/, …), not for
+  # our `local/` or `cloud/` prefixes. Scoping a key to `local/*` would
+  # make /v1/models return the literal patterns instead of the expanded
+  # model list, breaking Open WebUI's model picker. Without `models`,
+  # the key inherits the full proxy_model_list (everything in
+  # config.yaml) — fine for a homelab where the proxy itself is the
+  # trust boundary.
   resp="$(curl -fsS -X POST "$GATEWAY_ROOT/key/generate" \
     -H "Authorization: Bearer $master" -H "Content-Type: application/json" \
-    -d "{\"models\":[\"local/*\",\"cloud/*\"],\"key_alias\":\"$tool\"}")"
+    -d "{\"key_alias\":\"$tool\"}")"
   key="$(echo "$resp" | python3 -c 'import sys,json;print(json.load(sys.stdin)["key"])')"
   mkdir -p "$SECRETS_DIR"
   printf '%s' "$key" > "$(_file_for "$tool")"
