@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# litellm-keys — sync per-tool LiteLLM virtual keys between
+# ~/.copilot/secrets/litellm-<tool>.txt and the macOS Keychain.
+#
+# Keychain is the cross-machine sync mechanism (iCloud Keychain syncs
+# generic passwords across signed-in Macs). Files are the per-machine
+# runtime cache that the zsh dotfiles read at shell start.
+#
+# Usage:
+#   litellm-keys list                 # show what's where
+#   litellm-keys push [tool ...]      # files  → Keychain
+#   litellm-keys pull [tool ...]      # Keychain → files (typical: new machine)
+#   litellm-keys mint <tool>          # POST /key/generate, save to file + Keychain
+#   litellm-keys revoke <tool>        # POST /key/delete, drop file + Keychain
+
+set -euo pipefail
+
+SECRETS_DIR="$HOME/.copilot/secrets"
+GATEWAY="${LITELLM_BASE_URL:-https://llm.hyperionx.dev/v1}"
+GATEWAY_ROOT="${GATEWAY%/v1}"
+DEFAULT_TOOLS=(copilotp opencode aider openwebui master-key)
+
+_file_for() { echo "$SECRETS_DIR/litellm-$1.txt"; }
+_kc_service() { echo "litellm-$1"; }
+_read_file() { local f; f="$(_file_for "$1")"; [[ -r "$f" ]] && cat "$f"; }
+_read_kc()   { security find-generic-password -s "$(_kc_service "$1")" -w 2>/dev/null || true; }
+
+cmd_list() {
+  printf '%-14s  %-9s  %-9s  %s\n' TOOL FILE KEYCHAIN PREFIX
+  for t in "${DEFAULT_TOOLS[@]}"; do
+    f="$(_read_file "$t")"; k="$(_read_kc "$t")"
+    fs=$([[ -n "$f" ]] && echo present || echo missing)
+    ks=$([[ -n "$k" ]] && echo present || echo missing)
+    prefix=""
+    [[ -n "$f" ]] && prefix="${f:0:14}…"
+    [[ -z "$f" && -n "$k" ]] && prefix="${k:0:14}…"
+    printf '%-14s  %-9s  %-9s  %s\n' "$t" "$fs" "$ks" "$prefix"
+  done
+}
+
+cmd_push() {
+  local tools=("${@:-${DEFAULT_TOOLS[@]}}")
+  for t in "${tools[@]}"; do
+    f="$(_read_file "$t")"
+    [[ -z "$f" ]] && { echo "skip $t: no file at $(_file_for "$t")"; continue; }
+    security add-generic-password -U -a "$USER" -s "$(_kc_service "$t")" -w "$f" -T "" 2>/dev/null \
+      && echo "pushed $t → Keychain ($(_kc_service "$t"))"
+  done
+  echo
+  echo "Open the Passwords app to confirm; drag into the iCloud group if you want cross-Mac sync."
+}
+
+cmd_pull() {
+  local tools=("${@:-${DEFAULT_TOOLS[@]}}")
+  mkdir -p "$SECRETS_DIR"
+  for t in "${tools[@]}"; do
+    k="$(_read_kc "$t")"
+    [[ -z "$k" ]] && { echo "skip $t: no Keychain item for $(_kc_service "$t")"; continue; }
+    printf '%s' "$k" > "$(_file_for "$t")"
+    chmod 600 "$(_file_for "$t")"
+    echo "pulled $t → $(_file_for "$t")"
+  done
+}
+
+cmd_mint() {
+  local tool="${1:?usage: litellm-keys mint <tool>}"
+  local master; master="$(_read_file master-key)"
+  [[ -z "$master" ]] && master="$(_read_kc master-key)"
+  [[ -z "$master" ]] && { echo "no master key available (file or Keychain)"; exit 1; }
+  curl -fsS -X POST "$GATEWAY_ROOT/key/delete" \
+    -H "Authorization: Bearer $master" -H "Content-Type: application/json" \
+    -d "{\"key_aliases\":[\"$tool\"]}" >/dev/null 2>&1 || true
+  resp="$(curl -fsS -X POST "$GATEWAY_ROOT/key/generate" \
+    -H "Authorization: Bearer $master" -H "Content-Type: application/json" \
+    -d "{\"models\":[\"local/*\",\"cloud/*\"],\"key_alias\":\"$tool\"}")"
+  key="$(echo "$resp" | python3 -c 'import sys,json;print(json.load(sys.stdin)["key"])')"
+  mkdir -p "$SECRETS_DIR"
+  printf '%s' "$key" > "$(_file_for "$tool")"
+  chmod 600 "$(_file_for "$tool")"
+  security add-generic-password -U -a "$USER" -s "$(_kc_service "$tool")" -w "$key" -T "" 2>/dev/null || true
+  echo "minted $tool: ${key:0:12}…  → file + Keychain"
+}
+
+cmd_revoke() {
+  local tool="${1:?usage: litellm-keys revoke <tool>}"
+  local master; master="$(_read_file master-key)"
+  [[ -z "$master" ]] && master="$(_read_kc master-key)"
+  [[ -n "$master" ]] && curl -fsS -X POST "$GATEWAY_ROOT/key/delete" \
+    -H "Authorization: Bearer $master" -H "Content-Type: application/json" \
+    -d "{\"key_aliases\":[\"$tool\"]}" >/dev/null
+  rm -f "$(_file_for "$tool")"
+  security delete-generic-password -s "$(_kc_service "$tool")" 2>/dev/null || true
+  echo "revoked $tool (server + file + Keychain)"
+}
+
+case "${1:-list}" in
+  list)   shift; cmd_list "$@" ;;
+  push)   shift; cmd_push "$@" ;;
+  pull)   shift; cmd_pull "$@" ;;
+  mint)   shift; cmd_mint "$@" ;;
+  revoke) shift; cmd_revoke "$@" ;;
+  -h|--help|help) sed -n '2,/^$/p' "$0" | sed 's|^# \?||'; exit 0 ;;
+  *) sed -n '2,/^$/p' "$0" | sed 's|^# \?||'; exit 1 ;;
+esac

@@ -1,22 +1,19 @@
 # Aider config (stowed from ~/dotfiles/ollama).
 #
-# Routes through the LiteLLM gateway on solaris (https://llm.hyperionx.dev)
-# so model selection is consistent across copilotp/opencode/aider. The
-# AIDER_LITELLM_KEY env var (exported by 16-llm-gateway.zsh from
-# ~/.copilot/secrets/litellm-aider.txt) is the per-tool virtual key.
+# Routes through the LiteLLM gateway on solaris (https://llm.hyperionx.dev).
+# The `aider` shell wrapper in 60-aider-wrapper.zsh exports
+# OPENAI_API_KEY=$AIDER_LITELLM_KEY before exec — aider's YAML does NOT do
+# ${} env interpolation, so the key MUST come in via env.
 #
 # Models use the `openai/local/*` form because LiteLLM speaks OpenAI on the
 # wire and the upstream model name is `local/<short>` (see
 # homelab/solaris/litellm/config.yaml).
 #
-# Default: local/gemma4-e4b (the low-temp tools variant). Multimodal,
-# 256K ctx, ~27 tok/s warm. Diff-driven edits, so tool-call wire
-# format is irrelevant. qwen3:8b → local/qwen3-8b for commit
-# messages / repo summaries.
+# Default: local/gemma4-e4b — tighter sampler, multimodal, 256K ctx.
+# Weak model (commit msgs / repo summaries): local/qwen3-8b.
 
 model: openai/local/gemma4-e4b
 weak-model: openai/local/qwen3-8b
 edit-format: diff
 auto-commits: false
 openai-api-base: https://llm.hyperionx.dev/v1
-openai-api-key: ${AIDER_LITELLM_KEY}
