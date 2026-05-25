@@ -1,0 +1,23 @@
+# qwen3:8b with thinking-mode discouraged + lower temperature.
+#
+# Build with:
+#   ollama create qwen3:8b-nothink -f ~/dotfiles/ollama/modelfiles/qwen3-8b-nothink.Modelfile
+#
+# Caveat: a Modelfile cannot actually disable the trained <think> behavior
+# at the weights level. This combines a low temperature and a system
+# message that strongly discourages thinking blocks, which materially
+# reduces leakage in OpenAI-compatible tool-call streams (where Ollama's
+# top-level `think: false` toggle is not available).
+#
+# For *guaranteed* no-think tool calls, prefer qwen2.5-coder:7b.
+
+FROM qwen3:8b
+
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.05
+
+SYSTEM """You are a careful, tool-using coding assistant.
+Never emit <think>, <thinking>, or any chain-of-thought tags in your
+output. Respond with concise answers, or, when tools are available,
+issue a single well-formed tool call. Do not narrate your reasoning."""

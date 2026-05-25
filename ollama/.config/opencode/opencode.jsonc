@@ -1,0 +1,77 @@
+{
+  // opencode config (stowed from ~/dotfiles/ollama).
+  //
+  // Goal: route opencode through the local Ollama server, expose all the
+  // models we actually have installed, and default to the one with the
+  // cleanest tool-call behavior.
+  //
+  // Why granite4.1:8b is the default (May 2026):
+  //   - In a head-to-head Copilot CLI bench against gemma4:e4b-tools
+  //     (low-temp variant) and qwen3.5:4b, only granite4.1:8b made clean,
+  //     well-named tool calls (glob/view) instead of inventing tool names
+  //     or emitting the wrong harness syntax. IBM Apache-2.0, ~5 GB.
+  //   - Trained against OpenAI-style tool schemas, so it uses the catalog
+  //     provided by the host instead of hallucinating google_search etc.
+  //
+  // gemma4:e4b remains a great option for chat / code-writing without
+  // tool loops — multimodal, 256K ctx, ~27 tok/s warm. Switch via the
+  // model picker. qwen3:8b / qwen3:14b for pure chat (more conversational).
+  //
+  // Temperature: lowered to 0.2 across the board. The Ollama defaults
+  // (0.6–0.7) are tuned for creative chat and are too high for stable
+  // tool calling.
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "granite4.1:8b": {
+          "name": "Granite 4.1 8B (default; cleanest agentic tool calls)",
+          "tools": true,
+          "options": { "temperature": 0.2, "num_ctx": 32768 }
+        },
+        "gemma4:e4b": {
+          "name": "Gemma 4 E4B (chat/code; multimodal, 256K ctx)",
+          "tools": true,
+          "options": { "temperature": 0.2, "num_ctx": 32768, "reasoning_effort": "none" }
+        },
+        "qwen2.5-coder:7b": {
+          "name": "Qwen2.5 Coder 7B (previous default; no thinking mode)",
+          "tools": true,
+          "options": { "temperature": 0.2, "num_ctx": 32768 }
+        },
+        "qwen3:8b": {
+          "name": "Qwen3 8B (chat; thinking mode)",
+          "tools": true,
+          "options": { "temperature": 0.4, "num_ctx": 32768 }
+        },
+        "qwen3:8b-q8_0": {
+          "name": "Qwen3 8B Q8_0 (higher quality, slower)",
+          "tools": true,
+          "options": { "temperature": 0.4, "num_ctx": 32768 }
+        },
+        "qwen3:14b": {
+          "name": "Qwen3 14B (smarter, slow; cap ctx)",
+          "tools": true,
+          "options": { "temperature": 0.4, "num_ctx": 16384 }
+        },
+        "qwen3.5:4b": {
+          "name": "Qwen3.5 4B (tiny + fast; tools+thinking+vision)",
+          "tools": true,
+          "options": { "temperature": 0.2, "num_ctx": 32768 }
+        },
+        "granite3.3:8b": {
+          "name": "Granite 3.3 8B (long context; superseded by 4.1)",
+          "tools": true,
+          "options": { "temperature": 0.2, "num_ctx": 32768 }
+        }
+      }
+    }
+  },
+  "model": "ollama/granite4.1:8b",
+  "small_model": "ollama/granite4.1:8b"
+}

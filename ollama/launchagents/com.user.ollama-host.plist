@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Host/bind config for Ollama. Sister to com.user.ollama-env.plist (which
+  sets tuning params). Kept separate so the bind address can vary per host
+  without touching the shared tuning plist.
+
+  OLLAMA_HOST=0.0.0.0:11434 binds all interfaces, so:
+    - Docker Desktop containers reach it via host.docker.internal:11434
+    - Tailnet peers reach it via the tailnet IP
+    - Local CLI (e.g. `ollama list`) reaches it via 127.0.0.1
+  No other binding (loopback-only or tailnet-only) satisfies all three at
+  once.
+
+  OLLAMA_MODELS points at the external SSD where the models live. Adjust
+  per host if you don't have a Helio drive mounted.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.user.ollama-host</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>
+      /bin/launchctl setenv OLLAMA_HOST 0.0.0.0:11434;
+      /bin/launchctl setenv OLLAMA_MODELS /Volumes/Helio/ollama/models;
+    </string>
+  </array>
+</dict>
+</plist>

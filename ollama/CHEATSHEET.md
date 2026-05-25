@@ -81,17 +81,17 @@ Prevent the swarm in the first place — add to VS Code `settings.json`:
 ## Streaming smoke test (bypasses copilot entirely)
 
 ```sh
-curl -N http://localhost:11434/v1/chat/completions \
+curl -N http://localhost:11434/api/chat \
   -H 'Content-Type: application/json' \
-  -d '{"model":"qwen3:8b","stream":true,
-       "messages":[{"role":"user","content":"Say hi /no_think"}]}'
+  -d '{"model":"qwen3:8b","stream":true,"think":false,
+       "messages":[{"role":"user","content":"Say hi"}]}'
 ```
 Tokens stream → ollama is healthy; problem is on the copilot side.
 
 ## Token-throughput benchmark
 
 ```sh
-ollama run qwen3:8b --verbose "Write a 200-word story about a cat. /no_think"
+ollama run qwen3:8b --verbose --think=false "Write a 200-word story about a cat."
 # Reports: eval rate (output tok/s), prompt eval rate (prefill tok/s)
 ```
 
@@ -108,10 +108,14 @@ brew services restart ollama       # full server restart
 ## Switch model for one call
 
 ```sh
-COPILOT_MODEL=qwen2.5-coder:7b copilotp                # cleaner tool calls
-COPILOT_MODEL=qwen3:14b      copilotp                  # smarter, slower
-COPILOT_MODEL=granite3.3:8b  copilotp                  # 128K context
+COPILOT_MODEL=gemma4:e4b-tools copilotp                # tuned gemma4 (chat/code, less reliable tool use)
+COPILOT_MODEL=gemma4:e4b       copilotp                # stock gemma4 (creative chat)
+COPILOT_MODEL=qwen2.5-coder:7b copilotp                # older default; no thinking mode
+COPILOT_MODEL=qwen3:8b         copilotp                # pure chat / reasoning (no tools)
+COPILOT_MODEL=qwen3:14b        copilotp                # smarter, slower
+COPILOT_MODEL=granite3.3:8b    copilotp                # 128K context (older granite)
 ```
+Default is `granite4.1:8b` — most reliable real `tool_calls` in agent loops on this 16 GB Mac (bench results in README). `copilotp` also passes `--effort none` and excludes cloud-only / sub-agent tools that confuse small local models.
 
 ## Override token budgets one-off
 
@@ -178,12 +182,18 @@ launchctl setenv OLLAMA_KEEP_ALIVE 1h && brew services restart ollama
 
 ## Performance expectations (M1 Pro 16 GB)
 
+Measured on this machine, ollama 0.24, KV cache q8_0, ctx 32768.
+
 | Model         | Prefill | Output  | Cold start | Notes |
 |---------------|---------|---------|------------|-------|
-| qwen3:8b      | ~75 t/s | ~35 t/s | ~90 s      | Default; needs `/no_think` |
-| qwen2.5-coder:7b | ~90 t/s | ~45 t/s | ~60 s | Cleanest tool calls |
+| qwen2.5-coder:7b | ~160 t/s | ~25 t/s | ~8 s | Older default. **Note:** emits function calls inside `content`, not the OpenAI `tool_calls` field. |
+| granite4.1:8b | ~110 t/s | ~28 t/s | ~10 s | **Current default.** Cleanest agentic tool calls in the May 2026 bench — only model that didn't invent fake tool names. IBM Apache-2.0, ~5 GB. |
+| gemma4:e4b(-tools) | ~120 t/s | ~27 t/s | ~9 s | Best for chat/code-writing. Even the temp=0.2 variant invents tool names ~⅓ of the time in agent loops. Multimodal, 256K ctx. |
+| qwen3.5:4b | ~140 t/s | ~30 t/s | ~7 s | Tiny, fast. Emits `<search_files>` XML instead of OpenAI `tool_calls` — wrong harness for Copilot CLI. |
+| qwen3:8b      | ~75 t/s | ~35 t/s | ~90 s      | Better chat; `<think>` blocks corrupt tool JSON on OpenAI-compatible endpoint. |
 | qwen3:14b     | ~30 t/s | ~17 t/s | ~150 s     | Lower ctx; close to RAM ceiling |
-| granite3.3:8b | ~70 t/s | ~32 t/s | ~80 s      | Best for very long context |
+| granite3.3:8b | ~70 t/s | ~32 t/s | ~80 s      | Superseded by 4.1 |
+| gemma4:26b    | (removed) | — | — | 18 GB resident forced a 39/61 CPU/GPU split with multi-minute warm gens. |
 
 First `copilotp` call after `exec zsh` is the slowest — system prompt
 (~12K tokens) must be prefilled. Subsequent calls in the same session
@@ -201,7 +211,7 @@ pgrep -fl 'copilot$' && pkill -fl 'copilot$'
 brew services restart ollama
 
 # 3. Nuclear option — unload the model:
-ollama stop qwen3:8b
+ollama stop gemma4:e4b
 ```
 
 ## Where things live
@@ -211,6 +221,9 @@ ollama stop qwen3:8b
 | `~/dotfiles/ollama/` | This stow package |
 | `~/.config/zsh/15-ollama.zsh` | OLLAMA_* shell exports (symlink) |
 | `~/.config/zsh/50-copilot-local.zsh` | `copilotp()` function (symlink) |
-| `~/.copilot/copilot-instructions.md` | `/no_think` guardrail (machine-local) |
+| `~/.config/opencode/opencode.jsonc` | opencode → Ollama provider config (symlink) |
+| `~/.aider.conf.yml` | aider default model config (symlink) |
+| `~/dotfiles/ollama/modelfiles/` | Optional Modelfiles (e.g. qwen3:8b-nothink) |
+| `~/.copilot/copilot-instructions.md` | Global user-level Copilot CLI guidance |
 | `/opt/homebrew/var/log/ollama.log` | Server log |
 | `~/.ollama/models/` | Model blobs (~33 GB current) |

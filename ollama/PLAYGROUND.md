@@ -39,7 +39,7 @@ curl -s http://localhost:11434/api/tags | jq '.models[].name'
 Quick generation, no agent:
 
 ```sh
-ollama run qwen3:8b "Say hi in exactly 5 words. /no_think"
+ollama run qwen3:8b --think=false "Say hi in exactly 5 words."
 ```
 
 Watch `ollama ps` — first request loads the model (~5–10 s), then `100% GPU`
@@ -300,8 +300,10 @@ COPILOT_MODEL=qwen2.5-coder:7b  copilotp -p "List the 5 largest files in ~/Downl
 ```
 
 `qwen2.5-coder:7b` has no thinking mode → consistently cleaner tool calls.
-`qwen3:8b` is fine *because* of the `/no_think` line in
-`~/.copilot/copilot-instructions.md`.
+For `qwen3:8b`, the Qwen `/no_think` soft switch is unreliable through
+Ollama; use `--think=false` for direct CLI calls, or accept that Copilot
+CLI's BYOK path (OpenAI-compat endpoint) does not expose a `think` toggle
+and may surface `<think>` blocks.
 
 ### 6c. Memory ceiling (live!)
 

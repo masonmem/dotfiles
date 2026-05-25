@@ -21,8 +21,37 @@
 #     (32768). We give the agent 24K prompt headroom (tool results stack up)
 #     and an 8K output cap, which is plenty for code generation.
 
+# Default model: granite4.1:8b
+#   - Picked May 2026 after head-to-head bench with gemma4:e4b-tools and
+#     qwen3.5:4b on Copilot CLI's agentic loop ("list files and describe"
+#     against the real 10-tool catalog after exclusions):
+#       granite4.1:8b   → 3 clean tool calls (glob, view, view), no confab
+#       gemma4:e4b-tools → 0 tool calls, just shrugged
+#       qwen3.5:4b      → emitted XML <search_files> tags (wrong harness),
+#                          ollama tool-parser couldn't extract a call
+#   - granite4.1 (IBM, Apache-2.0) is "tools"-tagged on ollama.com and is
+#     trained against OpenAI-style tool schemas, so it actually uses tools
+#     from the provided catalog instead of inventing google_search,
+#     view_file_list_, etc. ~5 GB; comfortably fits with headroom on 16 GB.
+#   - Use gemma4:e4b-tools for chat/code-writing tasks where you want
+#     better prose/explanations and don't need clean agentic loops.
+#
+# Excluded tools (--excluded-tools):
+#   Cloud-only or routinely confusing for small local models:
+#     task, read_agent, list_agents  — sub-agent spawning (would re-invoke
+#       the local model recursively; useless on small models)
+#     skill                           — built-in Copilot skills (cloud)
+#     sql                             — session SQLite; eats context with
+#                                       little benefit at this model size
+#     fetch_copilot_cli_documentation — cloud doc fetch
+#     report_intent                   — UI-only signaling
+#
+# Fallbacks if granite misbehaves on a session:
+#   COPILOT_MODEL=gemma4:e4b-tools  copilotp   # chattier; flaky on tools
+#   COPILOT_MODEL=qwen2.5-coder:7b  copilotp   # old default
+#   COPILOT_MODEL=qwen3:8b          copilotp   # pure chat
 copilotp() {
-  local model="${COPILOT_MODEL:-qwen3:8b}"
+  local model="${COPILOT_MODEL:-granite4.1:8b}"
   local offline="true"
   [[ -n "${COPILOT_PRIVATE_ONLINE:-}" ]] && offline="false"
 
@@ -34,7 +63,10 @@ copilotp() {
   COPILOT_PROVIDER_MAX_PROMPT_TOKENS="${COPILOT_PROVIDER_MAX_PROMPT_TOKENS:-24576}" \
   COPILOT_PROVIDER_MAX_OUTPUT_TOKENS="${COPILOT_PROVIDER_MAX_OUTPUT_TOKENS:-8192}" \
   COPILOT_OFFLINE="$offline" \
-    command copilot "$@"
+    command copilot \
+      --effort none \
+      --excluded-tools=task,read_agent,list_agents,skill,sql,fetch_copilot_cli_documentation,report_intent \
+      "$@"
 }
 
 # Explicit cloud alias, for clarity in scripts.

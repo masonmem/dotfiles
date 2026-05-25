@@ -1,0 +1,27 @@
+# gemma4:e4b-tools — tool-calling tune of gemma4:e4b for local agentic CLIs
+#
+# Build:
+#     ollama create gemma4:e4b-tools -f gemma4-e4b-tools.Modelfile
+#
+# Why this exists:
+#   Stock gemma4:e4b ships with temperature=1.0. With a tool catalog
+#   provided by the host (e.g. Copilot CLI), high entropy causes the model
+#   to invent tool names that match its training priors but aren't in the
+#   actual catalog — google_search, web_search, view_directory, ...
+#   Dropping temperature to 0.2 dramatically reduces this confabulation
+#   without hurting general chat quality. top_p / top_k tightened to match.
+#
+#   This variant is the default for copilotp, .aider.conf.yml, and the
+#   opencode `gemma4:e4b` model entry.
+#
+# Notes:
+#   - Thinking mode stays on (no Modelfile knob to disable it). To trim
+#     thinking latency on the wire, pass reasoning_effort=none in the
+#     request body (Copilot CLI doesn't currently forward this to BYOK,
+#     but aider/opencode can).
+#   - Re-run this Modelfile after `ollama pull gemma4:e4b` to refresh.
+
+FROM gemma4:e4b
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER top_k 40

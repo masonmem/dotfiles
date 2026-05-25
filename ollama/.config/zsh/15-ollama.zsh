@@ -19,3 +19,6 @@ export OLLAMA_CONTEXT_LENGTH=32768
 export OLLAMA_KEEP_ALIVE=30m
 export OLLAMA_MAX_LOADED_MODELS=1
 export OLLAMA_NUM_PARALLEL=1
+
+# Consumed by aider (LiteLLM) and any other tool that auto-discovers Ollama.
+export OLLAMA_API_BASE=http://localhost:11434
