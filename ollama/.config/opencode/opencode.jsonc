@@ -78,6 +78,19 @@
       "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{env:HOME}/code", "{env:HOME}/notes"],
       "enabled": true
     },
+    // Dedicated notes MCP mirroring OWUI's `notes` tool server
+    // (solaris/notes-mcp). Scoped only to ~/notes so the tool's
+    // NAME ("notes_*") makes it obvious to the model when the user
+    // says "search my notes" — without this, the model often refuses
+    // ("I don't have access to your notes") because the generic
+    // `filesystem_*` tools don't signal vault semantics. Read-only
+    // semantics are enforced by opencode's permission gate (no `write`
+    // approval for ~/notes), not by the MCP server itself.
+    "notes": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{env:HOME}/notes"],
+      "enabled": true
+    },
     "fetch": {
       "type": "local",
       "command": ["uvx", "mcp-server-fetch"],
