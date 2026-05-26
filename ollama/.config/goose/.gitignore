@@ -1,0 +1,3 @@
+# Per-machine: goose's memory file is a symlink to ~/notes/inbox on
+# machines that have it; not portable across hosts.
+memory
