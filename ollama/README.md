@@ -64,7 +64,8 @@ ollama pull qwen3:8b          # pure-chat option (no tools)
 |---|---|
 | `opencode` | TUI agent against LiteLLM gateway. `Ctrl-M` switches model. Default: `local/granite4.1-8b-0x`. |
 | `aider` | Diff-driven editor. Shell wrapper injects `OPENAI_API_KEY` per-call. Default: `openai/local/gemma4-e4b-0x`. |
-| `litellm-keys list` / `mint <tool>` / `revoke <tool>` / `push` / `pull` | Manage per-tool LiteLLM virtual keys (file ↔ Keychain). |
+| `goose` | MCP-heavy interactive agent. Shell wrapper injects `OPENAI_API_KEY=$GOOSE_LITELLM_KEY`. Default: `cloud/sonnet-4.5-3x` (per-tool $10/30d cap on the virtual key). Config: `~/.config/goose/config.yaml` (stowed). |
+| `litellm-keys list` / `mint <tool> [--budget USD --duration 30d]` / `revoke <tool>` / `push` / `pull` | Manage per-tool LiteLLM virtual keys (file ↔ Keychain). Mint defaults to $10/30d budget cap. |
 
 See `homelab/docs/llm-clients.md` for how the gateway, virtual keys,
 and BYOK Anthropic plumbing fit together.
@@ -137,7 +138,7 @@ that qwen3 cannot match on this endpoint.
 ```bash
 brew install aider                       # diff-based pair programming (config: ~/.aider.conf.yml, stowed)
 brew install opencode                    # Claude-Code-style TUI agent  (config: ~/.config/opencode/opencode.jsonc, stowed)
-brew install block-goose-cli             # MCP-heavy general agent      (run `goose configure`; not stowed)
+brew install block-goose-cli             # MCP-heavy general agent      (config: ~/.config/goose/config.yaml, stowed)
 ```
 
 After binaries are installed, run `stow --no-folding ollama` from
@@ -146,10 +147,12 @@ opencode defaults to `granite4.1:8b` (the agent-loop winner); aider stays
 on `gemma4:e4b-tools` because aider is diff-driven and gemma4's chat /
 code-writing quality is what matters there.
 
-For `goose`, run `goose configure` once and pick:
-- Provider: **Ollama** (or "OpenAI compatible" → `http://localhost:11434/v1`)
-- Model: `granite4.1:8b`
-- API key: anything (e.g. `ollama`)
+`goose` is fully configured by the stowed `~/.config/goose/config.yaml`
+— it points at the LiteLLM gateway, picks `cloud/sonnet-4.5-3x`, and
+the shell wrapper (`61-goose-wrapper.zsh`) injects the per-tool virtual
+key. To switch its default model, edit `GOOSE_MODEL` in the YAML
+(commit & push to roll out everywhere); for a one-off run, prefix the
+call: `GOOSE_MODEL=local/granite4.1-8b-0x goose session`.
 
 ## Unstow
 
