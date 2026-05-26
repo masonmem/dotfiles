@@ -1,3 +1,10 @@
+# Suppress the instant-prompt warning fired when compinit prints noise
+# (e.g. `_brew_services: no such file or directory` during a brew tap
+# refresh race). It's harmless, self-heals on next `brew update`, and the
+# warning is louder than the underlying issue. Set before sourcing the
+# instant-prompt block so the option is in effect on this startup too.
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+
 # Enable Powerlevel10k instant prompt. Must stay near the top.
 # Initialization code requiring console input must go above this block.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then

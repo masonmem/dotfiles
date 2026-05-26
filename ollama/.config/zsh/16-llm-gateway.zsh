@@ -36,6 +36,16 @@ _litellm_load_key goose    GOOSE_LITELLM_KEY
 
 unfunction _litellm_load_key
 
+# ── GitHub MCP token (opencode's github MCP server) ───────────────────────
+# opencode.jsonc references {env:GITHUB_TOKEN}. We pull it from `gh auth
+# token` lazily so we don't shell out unless something actually reads it.
+# Silent on machines where `gh` isn't installed or isn't logged in — the
+# MCP server is then enabled-but-inert (opencode handles the missing-env
+# gracefully). Bootstrap on a new machine: `gh auth login` once.
+if command -v gh >/dev/null 2>&1; then
+  export GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null)}"
+fi
+
 # Deliberately NOT exporting OPENAI_API_KEY globally:
 #   opencode auto-detects providers from env vars and would silently
 #   light up its built-in "OpenAI" catalog (gpt-4o, gpt-5, …) on top of
