@@ -67,6 +67,8 @@ brew "age"                                 # SOPS encryption backend (per-host +
 brew "ollama"                              # local LLM runtime (server lives on solaris)
 brew "aider"                               # AI pair programming in the terminal
 brew "opencode"                            # terminal-native AI coding agent
+brew "block-goose-cli"                     # goose AI agent (block.xyz)
+brew "uv"                                  # Python pkg/runtime mgr; provides `uvx` for MCP servers
 brew "llm"                                 # Simon Willison's CLI for talking to LLMs
 
 # ── Applications ─────────────────────────────────────────────────────────────

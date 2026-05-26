@@ -20,9 +20,14 @@
   // ANTHROPIC_API_KEY, …) and clutter the picker with hundreds of
   // models we don't host.
   //
-  // Default model: granite4.1-8b — in a Copilot CLI bench it made the
-  // cleanest tool calls vs gemma4:e4b-tools and qwen3.5:4b. For non-
-  // local: switch to cloud/sonnet-4.5-3x via `/models` in the TUI.
+  // Default model: `auto` — LiteLLM's auto alias defaults to local
+  // granite and auto-escalates to cloud sonnet on context overflow.
+  // Switch to a pinned model via `/models` in the TUI.
+  //
+  // MCP servers (`mcp` block) extend opencode with tools. Conventions:
+  //   - install via official npm packages where they exist
+  //   - secrets come via env vars exported from ~/.copilot/secrets/
+  //   - filesystem is scoped to ~/code and ~/notes (drop a path to deny it)
   "$schema": "https://opencode.ai/config.json",
   "enabled_providers": ["litellm"],
   "provider": {
@@ -34,9 +39,12 @@
         "apiKey": "{env:OPENCODE_LITELLM_KEY}"
       },
       "models": {
-        "cloud/opus-4.5-15x":        { "tools": true },
-        "cloud/sonnet-4.5-3x":       { "tools": true },
+        "auto":                      { "tools": true },
+        "cloud/opus-4.7-5x":         { "tools": true },
+        "cloud/sonnet-4.6-3x":       { "tools": true },
         "cloud/haiku-4.5-1x":        { "tools": true },
+        "cloud/pro-2.5-3x":          { "tools": true },
+        "cloud/flash-2.5-1x":        { "tools": true },
         "local/granite4.1-8b-0x":    { "tools": true, "options": { "temperature": 0.2, "top_p": 0.9, "top_k": 40 } },
         "local/gemma4-e4b-0x":       { "tools": true, "options": { "temperature": 1.0, "top_p": 0.95, "top_k": 64, "reasoning_effort": "none" } },
         "local/qwen2.5-coder-7b-0x": { "tools": true, "options": { "temperature": 0.1, "top_p": 0.9, "top_k": 20 } },
@@ -48,6 +56,24 @@
       }
     }
   },
-  "model": "litellm/local/granite4.1-8b-0x",
+  "mcp": {
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{env:HOME}/code", "{env:HOME}/notes"],
+      "enabled": true
+    },
+    "fetch": {
+      "type": "local",
+      "command": ["uvx", "mcp-server-fetch"],
+      "enabled": true
+    },
+    "github": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
+      "environment": { "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}" },
+      "enabled": true
+    }
+  },
+  "model": "litellm/auto",
   "small_model": "litellm/local/granite4.1-8b-0x"
 }

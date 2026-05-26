@@ -8,15 +8,35 @@
 # The plaintext key lives at ~/.copilot/secrets/litellm-goose.txt and
 # is exported as GOOSE_API_KEY by the `16-llm-gateway.zsh` dotfile.
 #
-# Default model: cloud/sonnet-4.5-3x — goose is interactive and benefits
-# from a strong model; switch to a local model with `goose configure`
-# (writes here) or `GOOSE_MODEL=local/granite4.1-8b-0x goose session`.
+# ── Models ──────────────────────────────────────────────────────────────
+# Default model: cloud/sonnet-4.6-3x — goose is interactive and benefits
+# from a strong model; switch to local with
+# `GOOSE_MODEL=local/granite4.1-8b-0x goose session`.
 GOOSE_PROVIDER: openai
-GOOSE_MODEL: cloud/sonnet-4.5-3x
+GOOSE_MODEL: cloud/sonnet-4.6-3x
 OPENAI_HOST: https://llm.hyperionx.dev
 OPENAI_BASE_PATH: /v1/chat/completions
+
+# ── Permission / approval mode ──────────────────────────────────────────
+# Goose defaults to `auto` (fully autonomous tool calls). For a homelab
+# workstation that's a footgun — a prompt-injection in a fetched page
+# could move/delete files. `smart_approve` keeps trivial calls (read,
+# list) automatic but requires explicit y/N for anything destructive
+# (shell, write, rm). Switch to `approve` for paranoia, `auto` for
+# CI-style autonomous runs.
+GOOSE_MODE: smart_approve
+
+# ── Extensions ──────────────────────────────────────────────────────────
+# developer  → builtin shell/text-edit tools (default)
+# memory     → persistent markdown notes goose can read/write across
+#              sessions; backing store is ~/.config/goose/memory/*.md
+#              (gitignore or move it under your own ~/notes repo to sync).
 extensions:
   developer:
     enabled: true
     type: builtin
     name: developer
+  memory:
+    enabled: true
+    type: builtin
+    name: memory
