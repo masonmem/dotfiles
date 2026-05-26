@@ -50,9 +50,12 @@ fi
 #   opencode auto-detects providers from env vars and would silently
 #   light up its built-in "OpenAI" catalog (gpt-4o, gpt-5, …) on top of
 #   the LiteLLM provider configured in opencode.jsonc — polluting the
-#   model picker with models we don't host. opencode reads the gateway
-#   key from $OPENCODE_LITELLM_KEY via the `{env:…}` placeholder in its
-#   config; aider uses its own shell wrapper (60-aider-wrapper.zsh).
+#   model picker with models we don't host. opencode itself reads its
+#   gateway key directly from ~/.copilot/secrets/litellm-opencode.txt
+#   via `{file:...}` substitution in opencode.jsonc (NOT {env:VAR},
+#   which silently resolves to "" when the var isn't in the launching
+#   process env — produced a 401 in round 32). aider/goose use shell
+#   wrappers that inject OPENAI_API_KEY per invocation.
 #
 # For ad-hoc curl / scripts, set explicitly per-invocation, e.g.:
 #   OPENAI_BASE_URL=$LITELLM_BASE_URL OPENAI_API_KEY=$OPENCODE_LITELLM_KEY \

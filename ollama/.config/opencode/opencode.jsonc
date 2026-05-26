@@ -3,8 +3,15 @@
   //
   // Single source of truth: the LiteLLM gateway on solaris
   // (https://llm.hyperionx.dev). Authenticated with the per-tool
-  // virtual key $OPENCODE_LITELLM_KEY (exported by 16-llm-gateway.zsh
-  // from ~/.copilot/secrets/litellm-opencode.txt).
+  // virtual key in ~/.copilot/secrets/litellm-opencode.txt, read
+  // directly via opencode's `{file:...}` substitution at config-load
+  // time. We deliberately do NOT use `{env:OPENCODE_LITELLM_KEY}`:
+  // that returns empty-string when the var is missing from the
+  // launching process env (regex replace with `|| ""`), which silently
+  // produces 401s if opencode was launched from any context that
+  // didn't run 16-llm-gateway.zsh (launchctl, a fresh PATH-only shell,
+  // a different terminal app, etc.). `{file:}` decouples auth from
+  // shell-env state — same file, no inheritance gotcha.
   //
   // Model ids mirror homelab/solaris/litellm/config.yaml. The id IS
   // the display name — no `name` override here — so opencode and Open
@@ -36,7 +43,7 @@
       "name": "LiteLLM (solaris gateway)",
       "options": {
         "baseURL": "https://llm.hyperionx.dev/v1",
-        "apiKey": "{env:OPENCODE_LITELLM_KEY}"
+        "apiKey": "{file:~/.copilot/secrets/litellm-opencode.txt}"
       },
       "models": {
         "auto":                      { "tools": true },
