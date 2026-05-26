@@ -12,7 +12,9 @@ typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 # such file or directory`. The file is back milliseconds later — next
 # shell start is clean. Wrap compinit so only that specific class of
 # error is dropped; all other compinit warnings still surface.
-autoload -Uz compinit
+# `autoload -Uz +X` loads the function body without executing it, so we
+# can clone it into a renamed copy before replacing the original.
+autoload -Uz +X compinit
 functions[_orig_compinit]=$functions[compinit]
 compinit() {
   _orig_compinit "$@" 2> >(grep -v 'no such file or directory' >&2)
