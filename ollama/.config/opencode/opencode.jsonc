@@ -88,6 +88,31 @@
       "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
       "environment": { "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}" },
       "enabled": true
+    },
+    // Persistent knowledge graph across opencode sessions. Stores
+    // entities, relations, and observations to ~/.config/opencode/
+    // memory.json by default. Lets the model remember "Mason prefers X"
+    // across runs without re-explaining every time.
+    "memory": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
+      "enabled": true
+    },
+    // Date/time/timezone math. Tiny but fixes the "model thinks it's
+    // 2024" class of bug; useful any time the model needs to reason
+    // about "today", "in 3 days", or convert across zones.
+    "time": {
+      "type": "local",
+      "command": ["uvx", "mcp-server-time"],
+      "enabled": true
+    },
+    // Structured reasoning scratchpad. The model can call this to lay
+    // out and revise a multi-step plan before executing. Useful in long
+    // agent loops; ~free when not called.
+    "sequential-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": true
     }
   },
   "model": "litellm/auto",
