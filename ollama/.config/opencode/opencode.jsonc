@@ -91,5 +91,43 @@
     }
   },
   "model": "litellm/auto",
-  "small_model": "litellm/local/granite4.1-8b-0x"
+  "small_model": "litellm/local/granite4.1-8b-0x",
+
+  // ---------------------------------------------------------------
+  // Agent-plane permission gate (SKILL.md rule 17).
+  // opencode is the WRITE side of the chat/agent split: it gets bash,
+  // write, edit, and shell-driven git mutation. Those are gated to
+  // require approval so that anything injected into a prompt (notes,
+  // pasted issue body, fetched page, MCP tool output) can't silently
+  // mutate state. Read-class tools (read, grep/glob, list) stay on
+  // "allow" — they're the same surface the chat plane has.
+  // ---------------------------------------------------------------
+  "permission": {
+    "edit": "ask",
+    "write": "ask",
+    "bash": {
+      // Read-class shell — safe to auto-allow.
+      "ls *":      "allow",
+      "cat *":     "allow",
+      "head *":    "allow",
+      "tail *":    "allow",
+      "rg *":      "allow",
+      "grep *":    "allow",
+      "fd *":      "allow",
+      "find *":    "allow",
+      "tree *":    "allow",
+      "pwd":       "allow",
+      "echo *":    "allow",
+      "wc *":      "allow",
+      "git status*":   "allow",
+      "git log*":      "allow",
+      "git diff*":     "allow",
+      "git show*":     "allow",
+      "git branch*":   "allow",
+      "git remote*":   "allow",
+      // Anything else (rm, mv, git push, npm/pip install, docker, kubectl,
+      // curl/wget that could exfil, eval, sudo, …) requires approval.
+      "*": "ask"
+    }
+  }
 }
