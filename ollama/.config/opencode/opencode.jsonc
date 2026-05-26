@@ -8,7 +8,7 @@
   //
   // Model ids mirror homelab/solaris/litellm/config.yaml. The id IS
   // the display name — no `name` override here — so opencode and Open
-  // WebUI show identical strings (e.g. `cloud/claude-sonnet-4.5-3x`). The
+  // WebUI show identical strings (e.g. `cloud/claude-sonnet-4.6-3x`). The
   // `-Nx` suffix is the cost tier baked into the id; see
   // homelab/docs/models.md § "Cost-tier suffix".
   //
