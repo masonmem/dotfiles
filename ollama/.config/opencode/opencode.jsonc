@@ -84,10 +84,16 @@
       "enabled": true
     },
     "github": {
+      // Deprecated upstream — @modelcontextprotocol/server-github is no
+      // longer maintained. The `gh` CLI is already authenticated and on
+      // PATH; opencode can call it via bash for the same surface
+      // (issues, PRs, repo queries). Re-enable with the new official
+      // `github/github-mcp-server` (Go binary) when a stable npm/brew
+      // distribution lands and we wire GITHUB_TOKEN.
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
       "environment": { "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}" },
-      "enabled": true
+      "enabled": false
     },
     // Persistent knowledge graph across opencode sessions. Stores
     // entities, relations, and observations to ~/.config/opencode/
