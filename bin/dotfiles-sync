@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# dotfiles-sync — pull latest dotfiles, install any new brew packages, re-stow.
+# Safe to run repeatedly (idempotent). Designed for solaris (always-on) so a
+# push from navi lands on solaris without manual ssh-and-edit. Also fine on
+# navi as a "catch up after working on a different machine" command.
+#
+# Triggers:
+#   - Manual:  `dotfiles-sync`
+#   - Timer:   sh.user.dotfiles-sync launchd agent (opt-in; see README).
+#
+# Conservative by default:
+#   - `git pull --ff-only`        (never rebases or auto-merges)
+#   - `brew bundle --no-upgrade`  (installs missing, does NOT upgrade existing)
+#   - `stow --no-folding -R`      (re-link; safe even if already linked)
+set -euo pipefail
+
+DOTFILES="${DOTFILES:-$HOME/dotfiles}"
+PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+log() { printf '\033[36m[dotfiles-sync]\033[0m %s\n' "$*"; }
+
+cd "$DOTFILES"
+
+# Bail loudly if dirty — we won't trample local edits.
+if ! git diff --quiet HEAD || ! git diff --quiet --cached; then
+  log "working tree dirty; refusing to sync. Commit or stash first:"
+  git status --short
+  exit 1
+fi
+
+log "fetching origin…"
+git fetch --quiet origin
+
+local_rev=$(git rev-parse HEAD)
+remote_rev=$(git rev-parse '@{u}')
+if [[ "$local_rev" == "$remote_rev" ]]; then
+  log "already up to date ($local_rev)"
+else
+  log "pulling $local_rev → $remote_rev"
+  git pull --ff-only --quiet
+fi
+
+log "brew bundle (install missing only)…"
+brew bundle --no-upgrade --file="$DOTFILES/Brewfile" >/dev/null
+
+log "re-stowing packages…"
+PACKAGES=(zsh p10k tmux git nvim lazygit atuin ollama)
+for pkg in "${PACKAGES[@]}"; do
+  [[ -d "$DOTFILES/$pkg" ]] || continue
+  stow --no-folding -R -d "$DOTFILES" -t "$HOME" "$pkg"
+done
+
+log "done."

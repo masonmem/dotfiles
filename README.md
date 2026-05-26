@@ -2,6 +2,21 @@
 
 macOS dev environment. Apple Silicon, zsh, Homebrew. Managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
+## Intent: two-Mac parity, gitops sync
+
+This repo is the source of truth for **both** Macs on the tailnet:
+
+| Host | Role | Uptime |
+|---|---|---|
+| **navi** (laptop) | Primary dev machine. Code, edit, push. | Comes and goes. |
+| **solaris** (Mac Mini M2 Pro) | Always-on TTY + model host. SSH-into-from-anywhere via Tailscale; runs Ollama, LiteLLM, OWUI, MCP bridges. | 24/7. |
+
+The promise: **identical shell environment on both.** Same zsh config, same Brewfile, same opencode + aider + goose wiring, same secrets layout under `~/.copilot/secrets/`. So `ssh solaris` from a phone (Termius/Blink over Tailscale) drops me into a TTY that feels exactly like navi — same aliases, same models, same agent stack.
+
+**Push from navi → pull on solaris.** Edit on the laptop, commit, push to `masonmem/dotfiles`. Then run `dotfiles-sync` on solaris (or wait for the optional launchd timer — see below) and the change propagates: `git pull --ff-only`, `brew bundle --no-upgrade` for any new tools, `stow -R` to re-link.
+
+Secrets (`~/.copilot/secrets/*`) are **not** in this repo; they're copied out-of-band and mirrored manually when rotated.
+
 ---
 
 ## Bootstrap a new machine
@@ -213,4 +228,35 @@ cd ~/dotfiles
 git add -A
 git commit -m "feat: ..."
 git push
+```
+
+---
+
+## Syncing across machines
+
+After committing on one machine, propagate to the other:
+
+```sh
+# On the other machine (or via ssh):
+dotfiles-sync
+```
+
+What it does (idempotent, refuses to run on a dirty tree):
+1. `git pull --ff-only` (never rebase / auto-merge)
+2. `brew bundle --no-upgrade` — installs missing formulae from `Brewfile`, does NOT upgrade existing
+3. `stow --no-folding -R` each package — safe re-link
+
+### Optional: auto-sync on solaris via launchd
+
+solaris is the always-on box, so it's the natural target for a timer. Drop in `~/Library/LaunchAgents/sh.user.dotfiles-sync.plist` with `StartInterval` of e.g. 600 (10 min) and `ProgramArguments` pointing at `dotfiles-sync`. Mirror the pattern used by `sh.user.notes-sync.plist`. Not enabled by default — opt in when you trust the flow.
+
+### Sanity-check parity
+
+```sh
+# diff Brewfile vs installed formulae on either host
+brew bundle check --file=~/dotfiles/Brewfile
+
+# confirm same dotfiles HEAD on both
+ssh solaris 'git -C ~/dotfiles rev-parse HEAD'
+git -C ~/dotfiles rev-parse HEAD
 ```
