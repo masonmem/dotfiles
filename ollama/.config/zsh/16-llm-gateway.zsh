@@ -32,6 +32,7 @@ _litellm_load_key() {
 
 _litellm_load_key opencode OPENCODE_LITELLM_KEY
 _litellm_load_key aider    AIDER_LITELLM_KEY
+_litellm_load_key goose    GOOSE_LITELLM_KEY
 
 unfunction _litellm_load_key
 

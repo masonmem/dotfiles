@@ -1,0 +1,22 @@
+# goose config — stowed from ~/dotfiles/ollama.
+#
+# Single source of truth: the LiteLLM gateway on solaris
+# (https://llm.hyperionx.dev). Goose's `openai` provider is an
+# OpenAI-compatible client, so we point it at LiteLLM and authenticate
+# with the per-tool virtual key minted by `litellm-keys mint goose`.
+#
+# The plaintext key lives at ~/.copilot/secrets/litellm-goose.txt and
+# is exported as GOOSE_API_KEY by the `16-llm-gateway.zsh` dotfile.
+#
+# Default model: cloud/sonnet-4.5-3x — goose is interactive and benefits
+# from a strong model; switch to a local model with `goose configure`
+# (writes here) or `GOOSE_MODEL=local/granite4.1-8b-0x goose session`.
+GOOSE_PROVIDER: openai
+GOOSE_MODEL: cloud/sonnet-4.5-3x
+OPENAI_HOST: https://llm.hyperionx.dev
+OPENAI_BASE_PATH: /v1/chat/completions
+extensions:
+  developer:
+    enabled: true
+    type: builtin
+    name: developer

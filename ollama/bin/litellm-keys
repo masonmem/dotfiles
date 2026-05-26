@@ -18,7 +18,13 @@ set -euo pipefail
 SECRETS_DIR="$HOME/.copilot/secrets"
 GATEWAY="${LITELLM_BASE_URL:-https://llm.hyperionx.dev/v1}"
 GATEWAY_ROOT="${GATEWAY%/v1}"
-DEFAULT_TOOLS=(opencode aider openwebui master-key)
+DEFAULT_TOOLS=(opencode aider goose openwebui master-key)
+
+# Default per-tool monthly USD budget when calling `mint <tool>`.
+# Override per-invocation with `mint <tool> --budget <usd>`. Set to 0
+# to omit (key has no cap → uses global proxy budget if any).
+DEFAULT_BUDGET_USD=10
+DEFAULT_BUDGET_DURATION="30d"
 
 _file_for() { echo "$SECRETS_DIR/litellm-$1.txt"; }
 _kc_service() { echo "litellm-$1"; }
@@ -63,7 +69,17 @@ cmd_pull() {
 }
 
 cmd_mint() {
-  local tool="${1:?usage: litellm-keys mint <tool>}"
+  local tool="${1:?usage: litellm-keys mint <tool> [--budget USD] [--duration 30d]}"
+  shift || true
+  local budget="$DEFAULT_BUDGET_USD"
+  local duration="$DEFAULT_BUDGET_DURATION"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --budget)   budget="$2"; shift 2 ;;
+      --duration) duration="$2"; shift 2 ;;
+      *) echo "unknown arg: $1"; exit 2 ;;
+    esac
+  done
   local master; master="$(_read_file master-key)"
   [[ -z "$master" ]] && master="$(_read_kc master-key)"
   [[ -z "$master" ]] && { echo "no master key available (file or Keychain)"; exit 1; }
@@ -78,15 +94,28 @@ cmd_mint() {
   # the key inherits the full proxy_model_list (everything in
   # config.yaml) — fine for a homelab where the proxy itself is the
   # trust boundary.
+  #
+  # Per-tool budget: rolling window (default 30d / $10). LiteLLM tracks
+  # spend in litellm-db; key auto-rejects when over budget. See
+  # `homelab/docs/llm-clients.md` § "Per-tool spend caps".
+  local payload="{\"key_alias\":\"$tool\""
+  if [[ -n "$budget" && "$budget" != "0" ]]; then
+    payload+=",\"max_budget\":$budget,\"budget_duration\":\"$duration\""
+  fi
+  payload+="}"
   resp="$(curl -fsS -X POST "$GATEWAY_ROOT/key/generate" \
     -H "Authorization: Bearer $master" -H "Content-Type: application/json" \
-    -d "{\"key_alias\":\"$tool\"}")"
+    -d "$payload")"
   key="$(echo "$resp" | python3 -c 'import sys,json;print(json.load(sys.stdin)["key"])')"
   mkdir -p "$SECRETS_DIR"
   printf '%s' "$key" > "$(_file_for "$tool")"
   chmod 600 "$(_file_for "$tool")"
   security add-generic-password -U -a "$USER" -s "$(_kc_service "$tool")" -w "$key" -T "" 2>/dev/null || true
-  echo "minted $tool: ${key:0:12}…  → file + Keychain"
+  if [[ -n "$budget" && "$budget" != "0" ]]; then
+    echo "minted $tool: ${key:0:12}…  (budget: \$$budget / $duration)  → file + Keychain"
+  else
+    echo "minted $tool: ${key:0:12}…  (no budget cap)  → file + Keychain"
+  fi
 }
 
 cmd_revoke() {
