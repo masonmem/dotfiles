@@ -8,7 +8,7 @@
   //
   // Model ids mirror homelab/solaris/litellm/config.yaml. The id IS
   // the display name — no `name` override here — so opencode and Open
-  // WebUI show identical strings (e.g. `cloud/sonnet-4.5-3x`). The
+  // WebUI show identical strings (e.g. `cloud/claude-sonnet-4.5-3x`). The
   // `-Nx` suffix is the cost tier baked into the id; see
   // homelab/docs/models.md § "Cost-tier suffix".
   //
@@ -40,11 +40,11 @@
       },
       "models": {
         "auto":                      { "tools": true },
-        "cloud/opus-4.7-5x":         { "tools": true },
-        "cloud/sonnet-4.6-3x":       { "tools": true },
-        "cloud/haiku-4.5-1x":        { "tools": true },
-        "cloud/pro-2.5-3x":          { "tools": true },
-        "cloud/flash-2.5-1x":        { "tools": true },
+        "cloud/claude-opus-4.7-5x":         { "tools": true },
+        "cloud/claude-sonnet-4.6-3x":       { "tools": true },
+        "cloud/claude-haiku-4.5-1x":        { "tools": true },
+        "cloud/gemini-pro-2.5-3x":          { "tools": true },
+        "cloud/gemini-flash-2.5-1x":        { "tools": true },
         "local/granite4.1-8b-0x":    { "tools": true, "options": { "temperature": 0.2, "top_p": 0.9, "top_k": 40 } },
         "local/gemma4-e4b-0x":       { "tools": true, "options": { "temperature": 1.0, "top_p": 0.95, "top_k": 64, "reasoning_effort": "none" } },
         "local/qwen2.5-coder-7b-0x": { "tools": true, "options": { "temperature": 0.1, "top_p": 0.9, "top_k": 20 } },

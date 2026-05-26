@@ -9,11 +9,11 @@
 # is exported as GOOSE_API_KEY by the `16-llm-gateway.zsh` dotfile.
 #
 # ── Models ──────────────────────────────────────────────────────────────
-# Default model: cloud/sonnet-4.6-3x — goose is interactive and benefits
+# Default model: cloud/claude-sonnet-4.6-3x — goose is interactive and benefits
 # from a strong model; switch to local with
 # `GOOSE_MODEL=local/granite4.1-8b-0x goose session`.
 GOOSE_PROVIDER: openai
-GOOSE_MODEL: cloud/sonnet-4.6-3x
+GOOSE_MODEL: cloud/claude-sonnet-4.6-3x
 OPENAI_HOST: https://llm.hyperionx.dev
 OPENAI_BASE_PATH: /v1/chat/completions
 

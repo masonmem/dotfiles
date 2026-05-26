@@ -64,7 +64,7 @@ ollama pull qwen3:8b          # pure-chat option (no tools)
 |---|---|
 | `opencode` | TUI agent against LiteLLM gateway. `Ctrl-M` switches model. Default: `local/granite4.1-8b-0x`. |
 | `aider` | Diff-driven editor. Shell wrapper injects `OPENAI_API_KEY` per-call. Default: `openai/local/gemma4-e4b-0x`. |
-| `goose` | MCP-heavy interactive agent. Shell wrapper injects `OPENAI_API_KEY=$GOOSE_LITELLM_KEY`. Default: `cloud/sonnet-4.5-3x` (per-tool $10/30d cap on the virtual key). Config: `~/.config/goose/config.yaml` (stowed). |
+| `goose` | MCP-heavy interactive agent. Shell wrapper injects `OPENAI_API_KEY=$GOOSE_LITELLM_KEY`. Default: `cloud/claude-sonnet-4.5-3x` (per-tool $10/30d cap on the virtual key). Config: `~/.config/goose/config.yaml` (stowed). |
 | `litellm-keys list` / `mint <tool> [--budget USD --duration 30d]` / `revoke <tool>` / `push` / `pull` | Manage per-tool LiteLLM virtual keys (file ↔ Keychain). Mint defaults to $10/30d budget cap. |
 
 See `homelab/docs/llm-clients.md` for how the gateway, virtual keys,
@@ -102,7 +102,7 @@ via a localhost proxy logging real request bodies:
 
 **Takeaway:** the 4–8B class is genuinely hit-and-miss at agentic tool
 loops. `granite4.1:8b` is the most reliable local option for opencode
-agent work; reach for `cloud/sonnet-4.5-3x` when the task is non-trivial.
+agent work; reach for `cloud/claude-sonnet-4.5-3x` when the task is non-trivial.
 
 ### Suppressing Qwen3 thinking
 
@@ -148,7 +148,7 @@ on `gemma4:e4b-tools` because aider is diff-driven and gemma4's chat /
 code-writing quality is what matters there.
 
 `goose` is fully configured by the stowed `~/.config/goose/config.yaml`
-— it points at the LiteLLM gateway, picks `cloud/sonnet-4.5-3x`, and
+— it points at the LiteLLM gateway, picks `cloud/claude-sonnet-4.5-3x`, and
 the shell wrapper (`61-goose-wrapper.zsh`) injects the per-tool virtual
 key. To switch its default model, edit `GOOSE_MODEL` in the YAML
 (commit & push to roll out everywhere); for a one-off run, prefix the

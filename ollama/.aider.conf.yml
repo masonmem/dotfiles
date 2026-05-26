@@ -17,12 +17,12 @@
 # repetitive diff-formatting turn runs free on local. Disable with
 # `--no-architect` for a single-model session.
 #
-# Default architect: cloud/sonnet-4.6-3x — strong reasoning, prompt-cached.
+# Default architect: cloud/claude-sonnet-4.6-3x — strong reasoning, prompt-cached.
 # Default editor:    local/qwen2.5-coder-7b-0x — free, fast, diff-friendly.
 # Weak model (commit msgs / repo summaries): local/qwen2.5-coder-7b-0x.
 
 architect: true
-model: openai/cloud/sonnet-4.6-3x
+model: openai/cloud/claude-sonnet-4.6-3x
 editor-model: openai/local/qwen2.5-coder-7b-0x
 weak-model: openai/local/qwen2.5-coder-7b-0x
 edit-format: diff
