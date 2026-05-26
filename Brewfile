@@ -74,4 +74,3 @@ brew "llm"                                 # Simon Willison's CLI for talking to
 # ── Applications ─────────────────────────────────────────────────────────────
 cask "docker-desktop"
 cask "font-fira-code"                      # Nerd Font for terminal/editor
-cask "lulu"                                # Outbound default-deny egress firewall (Objective-See)

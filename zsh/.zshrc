@@ -5,6 +5,19 @@
 # instant-prompt block so the option is in effect on this startup too.
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 
+# Silence transient brew-race "no such file or directory" warnings from
+# compinit. /opt/homebrew/share/zsh/site-functions/_brew_services (and
+# friends) briefly vanish during `brew upgrade`'s atomic symlink swap;
+# if compinit walks fpath in that window it prints `compinit:527: no
+# such file or directory`. The file is back milliseconds later — next
+# shell start is clean. Wrap compinit so only that specific class of
+# error is dropped; all other compinit warnings still surface.
+autoload -Uz compinit
+functions[_orig_compinit]=$functions[compinit]
+compinit() {
+  _orig_compinit "$@" 2> >(grep -v 'no such file or directory' >&2)
+}
+
 # Enable Powerlevel10k instant prompt. Must stay near the top.
 # Initialization code requiring console input must go above this block.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
