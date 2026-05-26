@@ -40,19 +40,27 @@
       },
       "models": {
         "auto":                      { "tools": true },
+        "smart":                     { "tools": true },
         "cloud/claude-opus-4.7-5x":         { "tools": true },
         "cloud/claude-sonnet-4.6-3x":       { "tools": true },
         "cloud/claude-haiku-4.5-1x":        { "tools": true },
-        "cloud/gemini-pro-2.5-3x":          { "tools": true },
         "cloud/gemini-flash-2.5-1x":        { "tools": true },
         "local/granite4.1-8b-0x":    { "tools": true, "options": { "temperature": 0.2, "top_p": 0.9, "top_k": 40 } },
         "local/gemma4-e4b-0x":       { "tools": true, "options": { "temperature": 1.0, "top_p": 0.95, "top_k": 64, "reasoning_effort": "none" } },
-        "local/qwen2.5-coder-7b-0x": { "tools": true, "options": { "temperature": 0.1, "top_p": 0.9, "top_k": 20 } },
-        "local/qwen3-14b-0x":        { "tools": true, "options": { "temperature": 0.6, "top_p": 0.95, "top_k": 20 } },
+        // qwen2.5-coder advertises `tools` capability but its native tool
+        // template is unreliable — it emits raw `{"name":...,"arguments":...}`
+        // JSON as content even at the /api/chat layer. Mark tools:false so
+        // opencode doesn't try to drive it as an agent loop.
+        "local/qwen2.5-coder-7b-0x": { "tools": false, "options": { "temperature": 0.1, "top_p": 0.9, "top_k": 20 } },
+        "local/qwen3-14b-0x":        { "tools": true,  "options": { "temperature": 0.6, "top_p": 0.95, "top_k": 20 } },
         "local/qwen3-abliterated-8b-0x": { "tools": true, "options": { "temperature": 0.7, "top_p": 0.8, "top_k": 20 } },
-        "local/deepseek-r1-14b-0x":  { "tools": true, "options": { "temperature": 0.6, "top_p": 0.95 } },
-        "local/llama3.2-vision-11b-0x": { "tools": true, "options": { "temperature": 0.3, "top_p": 0.9 } },
-        "local/dolphin3-8b-0x":      { "tools": true, "options": { "temperature": 0.7, "top_p": 0.9, "top_k": 40 } }
+        // Models below have NO `tools` capability per `ollama show`. Sending
+        // tools to them just embeds the schema in the prompt and the model
+        // emits raw JSON text (looks like the LiteLLM streaming-tools bug
+        // but is actually the model lacking native tool support).
+        "local/deepseek-r1-14b-0x":  { "tools": false, "options": { "temperature": 0.6, "top_p": 0.95 } },
+        "local/llama3.2-vision-11b-0x": { "tools": false, "options": { "temperature": 0.3, "top_p": 0.9 } },
+        "local/dolphin3-8b-0x":      { "tools": false, "options": { "temperature": 0.7, "top_p": 0.9, "top_k": 40 } }
       }
     }
   },
