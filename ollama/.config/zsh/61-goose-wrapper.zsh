@@ -7,7 +7,7 @@
 #
 # Config: ~/.config/goose/config.yaml (stowed from
 # dotfiles/ollama/.config/goose/config.yaml). Default model:
-# cloud/claude-sonnet-4.5-3x — override with GOOSE_MODEL=local/granite4.1-8b-0x.
+# cloud/claude-sonnet-4.6-3x — override with GOOSE_MODEL=local/granite4.1-8b-0x.
 
 goose() {
   local key="${GOOSE_LITELLM_KEY:-}"
