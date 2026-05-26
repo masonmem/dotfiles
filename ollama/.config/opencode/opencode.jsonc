@@ -37,14 +37,14 @@
         "cloud/opus-4.5-15x":        { "tools": true },
         "cloud/sonnet-4.5-3x":       { "tools": true },
         "cloud/haiku-4.5-1x":        { "tools": true },
-        "local/granite4.1-8b-0x":    { "tools": true, "options": { "temperature": 0.2 } },
-        "local/gemma4-e4b-0x":       { "tools": true, "options": { "temperature": 0.2, "reasoning_effort": "none" } },
-        "local/qwen2.5-coder-7b-0x": { "tools": true, "options": { "temperature": 0.2 } },
-        "local/qwen3-14b-0x":        { "tools": true, "options": { "temperature": 0.4 } },
-        "local/qwen3-abliterated-8b-0x": { "tools": true, "options": { "temperature": 0.4 } },
-        "local/deepseek-r1-14b-0x":  { "tools": true, "options": { "temperature": 0.4 } },
-        "local/llama3.2-vision-11b-0x": { "tools": true, "options": { "temperature": 0.3 } },
-        "local/dolphin3-8b-0x":      { "tools": true, "options": { "temperature": 0.4 } }
+        "local/granite4.1-8b-0x":    { "tools": true, "options": { "temperature": 0.2, "top_p": 0.9, "top_k": 40 } },
+        "local/gemma4-e4b-0x":       { "tools": true, "options": { "temperature": 1.0, "top_p": 0.95, "top_k": 64, "reasoning_effort": "none" } },
+        "local/qwen2.5-coder-7b-0x": { "tools": true, "options": { "temperature": 0.1, "top_p": 0.9, "top_k": 20 } },
+        "local/qwen3-14b-0x":        { "tools": true, "options": { "temperature": 0.6, "top_p": 0.95, "top_k": 20 } },
+        "local/qwen3-abliterated-8b-0x": { "tools": true, "options": { "temperature": 0.7, "top_p": 0.8, "top_k": 20 } },
+        "local/deepseek-r1-14b-0x":  { "tools": true, "options": { "temperature": 0.6, "top_p": 0.95 } },
+        "local/llama3.2-vision-11b-0x": { "tools": true, "options": { "temperature": 0.3, "top_p": 0.9 } },
+        "local/dolphin3-8b-0x":      { "tools": true, "options": { "temperature": 0.7, "top_p": 0.9, "top_k": 40 } }
       }
     }
   },

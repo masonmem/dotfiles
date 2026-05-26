@@ -20,10 +20,13 @@ GATEWAY="${LITELLM_BASE_URL:-https://llm.hyperionx.dev/v1}"
 GATEWAY_ROOT="${GATEWAY%/v1}"
 DEFAULT_TOOLS=(opencode aider goose openwebui master-key)
 
-# Default per-tool monthly USD budget when calling `mint <tool>`.
-# Override per-invocation with `mint <tool> --budget <usd>`. Set to 0
-# to omit (key has no cap → uses global proxy budget if any).
-DEFAULT_BUDGET_USD=10
+# Default per-tool budget: NONE. Mason's policy is to cap at the
+# provider account level (Anthropic console hard cap, etc.) rather than
+# enforce per-tool key budgets in LiteLLM — simpler mental model,
+# single source of truth for cost ceiling. The `--budget` and
+# `--duration` flags below still work for ad-hoc per-key caps if you
+# ever want them (e.g. lending a key with a spend ceiling).
+DEFAULT_BUDGET_USD=0
 DEFAULT_BUDGET_DURATION="30d"
 
 _file_for() { echo "$SECRETS_DIR/litellm-$1.txt"; }
