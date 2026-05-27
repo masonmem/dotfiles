@@ -132,6 +132,18 @@
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
       "enabled": true
+    },
+    // UniFi controller (UCG Ultra) via the local unifi-mcp-server pipx
+    // install. Same wrapper script that the Copilot CLI uses
+    // (~/.copilot/bin/unifi-mcp-wrapper.sh) — sources UNIFI_* secrets
+    // from ~/.copilot/secrets/unifi.env so we don't duplicate them in
+    // the agent env. Exposes networks, clients, devices, firewall,
+    // DNS, WiFi, switching, port forwards, topology — gated by
+    // opencode's `bash`/`write` permission ask for mutations.
+    "unifi": {
+      "type": "local",
+      "command": ["{env:HOME}/.copilot/bin/unifi-mcp-wrapper.sh"],
+      "enabled": true
     }
   },
   "model": "litellm/auto",
