@@ -63,6 +63,56 @@ mkdir -p ~/.ai-config/secrets   # placeholder; populate per-tool as needed
 
 > **Why `--no-folding`?** Without it, stow symlinks entire directories (`~/.config/zsh → dotfiles/zsh/.config/zsh`). With it, stow links individual files, leaving room for untracked per-host overlays (`90-<hostname>.zsh`) alongside the stowed files.
 
+### Bootstrap on a non-Mac host (QNAP, Linux, etc.)
+
+The shell config is portable — same `.zshrc`, `.zprofile`, `.zshenv`, and `~/.config/zsh/*.zsh` work on any host with zsh. The catches: no Homebrew (substitute the host's package manager), and oh-my-zsh / powerlevel10k come via `git clone` instead of brew.
+
+```bash
+# Adjust the package install line for your host (apt/apk/opkg/pacman/dnf):
+# QNAP via Entware:
+/opt/bin/opkg install zsh git bash eza fd fzf jq neovim ripgrep tmux htop nano
+
+# Clone the repo (HTTPS if no SSH key yet; switch to SSH after)
+git clone git@github.com:masonmem/dotfiles.git ~/dotfiles
+
+# Install oh-my-zsh + powerlevel10k + the two plugins, manually
+git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+  ~/.oh-my-zsh/custom/themes/powerlevel10k
+git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
+  ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
+  ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+
+# Symlink the tracked files. `stow` works if available; if not (Entware
+# doesn't ship it), do the equivalent by hand — the README's "How stow
+# works" diagram shows the target layout.
+cd ~/dotfiles
+command -v stow >/dev/null && stow --no-folding zsh p10k || {
+  for src in zsh/.zshrc zsh/.zprofile zsh/.zshenv; do
+    ln -sfn "$PWD/$src" "$HOME/$(basename $src)"
+  done
+  mkdir -p ~/.config/zsh
+  for src in zsh/.config/zsh/*.zsh; do
+    ln -sfn "$PWD/$src" "$HOME/.config/zsh/$(basename $src)"
+  done
+  ln -sfn "$PWD/zsh/.config/zsh/completions" ~/.config/zsh/completions
+  ln -sfn "$PWD/p10k/.p10k.zsh" ~/.p10k.zsh
+}
+
+# (Optional) per-host shell config — copy + edit the template
+cp zsh/.config/zsh/90-host.zsh.example ~/.config/zsh/90-$(hostname -s).zsh
+
+# If the host's libc is too old for the bundled gitstatusd (e.g. QNAP on
+# glibc 2.21), opt out via the early-load hook so the p10k prompt doesn't
+# print init errors on every shell start. Other p10k segments still work.
+cat > ~/.zshrc.early.local <<EOF
+typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
+EOF
+```
+
+Stowed-config quirks on non-Macs are handled automatically by the dotfiles: `.zprofile`'s `brew shellenv` is guarded behind `[[ -x /opt/homebrew/bin/brew ]]`, `.zshenv`'s cargo source is guarded behind `[[ -r ~/.cargo/env ]]`, and the `macos` oh-my-zsh plugin only loads on Darwin. Entware paths (`/opt/bin`, `/opt/usr/bin`) are added to PATH conditionally — Mac hosts skip them because the dirs don't exist.
+
 ---
 
 ## Day-to-day sync
