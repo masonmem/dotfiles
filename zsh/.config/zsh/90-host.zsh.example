@@ -1,0 +1,59 @@
+# 90-<host>.zsh — per-host shell config that lives ALONGSIDE the stowed
+# files but is NOT itself stowed (this `.example` template is, but the
+# actual `90-<host>.zsh` you copy from it is not).
+#
+# The .zshrc loader sources `~/.config/zsh/*.zsh` in alphabetic order,
+# so 90-* runs LAST — perfect for overriding earlier aliases / env vars
+# or adding host-specific tooling.
+#
+# To use on a given host, copy this file and trim to what applies:
+#
+#   cp ~/.config/zsh/90-host.zsh.example ~/.config/zsh/90-$(hostname -s).zsh
+#   ${EDITOR:-vi} ~/.config/zsh/90-$(hostname -s).zsh
+#
+# Don't commit the resulting file — host-specific config is intentionally
+# untracked (see README "What's NOT stowed").
+
+# ----------------------------------------------------------------------
+# Example: hyperion (QNAP TS-464)
+# ----------------------------------------------------------------------
+# QNAP's busybox userland lacks most of the fancy CLI we use on the
+# Macs. 20-aliases.zsh now guards its aliases with `command -v`, so the
+# missing tools degrade quietly. Anything you'd like to override or add
+# specifically when SSH'd into hyperion goes here.
+#
+# # Stop trying to load powerlevel10k on the QNAP — it's heavy and the
+# # SSH session doesn't need it.
+# ZSH_THEME=""
+#
+# # Lightweight prompt
+# autoload -Uz vcs_info
+# precmd() { vcs_info }
+# zstyle ':vcs_info:git:*' formats ' (%b)'
+# setopt PROMPT_SUBST
+# PROMPT='%n@%m:%~${vcs_info_msg_0_} %# '
+#
+# # The QNAP's docker is at a non-standard path
+# export PATH="/share/CACHEDEV3_DATA/.qpkg/container-station/bin:$PATH"
+
+# ----------------------------------------------------------------------
+# Example: solaris (Mac Mini LLM server)
+# ----------------------------------------------------------------------
+# # Always default to opening tmux when SSHing in, so disconnections
+# # don't kill long-running opencode sessions.
+# if [[ -n "$SSH_CONNECTION" && -z "$TMUX" ]]; then
+#   tmux attach -t default || tmux new -s default
+# fi
+#
+# # Pin LITELLM_BASE_URL when reaching it from solaris itself (no proxy hop)
+# export LITELLM_BASE_URL="http://localhost:4000/v1"
+
+# ----------------------------------------------------------------------
+# Example: mld422 (work MacBook)
+# ----------------------------------------------------------------------
+# # Work-specific kubectl context shortcuts
+# alias kw='kubectl --context=work-prod'
+# alias ks='kubectl --context=work-staging'
+#
+# # Don't share LiteLLM / Ollama envs with personal config
+# unset LITELLM_BASE_URL OPENAI_API_KEY

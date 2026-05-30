@@ -11,11 +11,11 @@ This repo is the source of truth for **both** Macs on the tailnet:
 | **navi** (laptop) | Primary dev machine. Code, edit, push. | Comes and goes. |
 | **solaris** (Mac Mini M2 Pro) | Always-on TTY + model host. SSH-into-from-anywhere via Tailscale; runs Ollama, LiteLLM, OWUI, MCP bridges. | 24/7. |
 
-The promise: **identical shell environment on both.** Same zsh config, same Brewfile, same opencode + aider + goose wiring, same secrets layout under `~/.copilot/secrets/`. So `ssh solaris` from a phone (Termius/Blink over Tailscale) drops me into a TTY that feels exactly like navi — same aliases, same models, same agent stack.
+The promise: **identical shell environment on both.** Same zsh config, same Brewfile, same opencode + aider + goose wiring, same secrets layout under `~/.ai-config/secrets/` (Copilot CLI still finds them via `~/.copilot/secrets/`, which is a symlink). So `ssh solaris` from a phone (Termius/Blink over Tailscale) drops me into a TTY that feels exactly like navi — same aliases, same models, same agent stack.
 
-**Push from navi → pull on solaris.** Edit on the laptop, commit, push to `masonmem/dotfiles`. Then run `dotfiles-sync` on solaris (or wait for the optional launchd timer — see below) and the change propagates: `git pull --ff-only`, `brew bundle --no-upgrade` for any new tools, `stow -R` to re-link.
+**Push from navi → pull on solaris.** Edit on the laptop, commit, push to `masonmem/dotfiles`. Then run `dotfiles-sync` on solaris (or wait for the optional launchd timer — see below) and the change propagates: `git pull --ff-only`, `brew bundle --no-upgrade` for any new tools, `stow -R` to re-link. The parallel AI-brain repo (`masonmem/ai-config`) is pulled with `ai-config-sync`.
 
-Secrets (`~/.copilot/secrets/*`) are **not** in this repo; they're copied out-of-band and mirrored manually when rotated.
+Secrets (`~/.ai-config/secrets/*`) are **not** in this repo; they're copied out-of-band and mirrored manually when rotated (`secrets-push solaris`).
 
 ---
 
@@ -88,7 +88,7 @@ These files live on each machine but are **not tracked in the repo**. They conta
 | `~/.gitconfig.local`   | `[user]` name/email, machine-specific URLs    | Yes — `[include]` loads it |
 | `~/.gitignore_global`  | Global git ignores (DS_Store, .env, etc.)     | Yes                      |
 | `~/.ssh/config`        | SSH hosts, keys, algorithms                   | Yes (copy from `ssh/` template) |
-| `~/.config/zsh/90-*.zsh` | Machine-specific shell config (k8s, paths) | Optional                 |
+| `~/.config/zsh/90-*.zsh` | Machine-specific shell config (k8s, paths) | Optional — copy from `90-host.zsh.example` |
 | `~/.nvm/`             | Node versions managed by nvm                   | `mkdir -p ~/.nvm`        |
 
 The `.zshrc` auto-sources all `~/.config/zsh/*.zsh` files — add a numbered file (e.g. `90-work.zsh`) for machine-specific config without touching the repo.
@@ -107,7 +107,8 @@ The `.zshrc` auto-sources all `~/.config/zsh/*.zsh` files — add a numbered fil
 | `~/.config/zsh/00-path.zsh`        | PATH deduplication                                                  |
 | `~/.config/zsh/05-devcontainer.zsh`| Auto-installs tools on first container shell launch                 |
 | `~/.config/zsh/10-env.zsh`         | EDITOR, XDG dirs, BAT_THEME, NVM_DIR                                |
-| `~/.config/zsh/20-aliases.zsh`     | Modern CLI aliases: bat, eza, kubecolor, lazygit                    |
+| `~/.config/zsh/20-aliases.zsh`     | Modern CLI aliases: bat, eza, kubecolor, lazygit (all `command -v`-guarded so missing binaries on hyperion/Linux don't shadow the real ones) |
+| `~/.config/zsh/90-host.zsh.example`| Template for per-host overrides — copy to `90-<hostname>.zsh` (untracked) |
 | `~/.config/zsh/30-completions.zsh` | kubectl completion cache + kubecolor compdef                        |
 | `~/.config/zsh/40-tools.zsh`       | fzf (Ctrl-T/Alt-C), atuin (Ctrl-R), zoxide (replaces `cd`)          |
 | `~/.config/zsh/70-nvm.zsh`         | Lazy NVM — loads Node only when first invoked                       |
