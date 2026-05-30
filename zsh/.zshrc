@@ -5,6 +5,12 @@
 # instant-prompt block so the option is in effect on this startup too.
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 
+# Optional per-host overrides loaded BEFORE oh-my-zsh + powerlevel10k init.
+# Use for things that must be set early (POWERLEVEL9K_* vars in particular).
+# Untracked, empty by default. Example: hosts whose libc is too old for the
+# bundled gitstatusd can set `POWERLEVEL9K_DISABLE_GITSTATUS=true` here.
+[[ -r "$HOME/.zshrc.early.local" ]] && source "$HOME/.zshrc.early.local"
+
 # Silence transient brew-race "no such file or directory" warnings from
 # compinit. /opt/homebrew/share/zsh/site-functions/_brew_services (and
 # friends) briefly vanish during `brew upgrade`'s atomic symlink swap;
