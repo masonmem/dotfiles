@@ -126,7 +126,7 @@ Machine-specific or sensitive — kept on each Mac, not in the repo.
 
 | File                                  | Purpose                                          | Bootstrap                                                          |
 | ------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| `~/.gitconfig.local`                  | `[user]` name/email, Mac-local URLs              | Create manually — `[include]` from `~/.gitconfig` loads it         |
+| `~/.gitconfig.local`                  | `[user]` name/email, host-local URLs, and per-host overrides for stowed config (e.g. set `[core] pager = less -FRX` on hosts that don't have `delta` installed) | Create manually — `[include]` from `~/.gitconfig` loads it (last include wins on duplicate keys) |
 | `~/.gitignore_global`                 | Global git ignores (`.DS_Store`, `.env`, etc.)   | Create manually                                                    |
 | `~/.ssh/config`                       | SSH hosts, keys, algorithms                      | `cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config` then edit            |
 | `~/.config/zsh/90-<hostname>.zsh`     | Per-host shell overrides (`k8s` contexts, etc.)  | Copy `90-host.zsh.example` to `90-<hostname>.zsh`                  |
