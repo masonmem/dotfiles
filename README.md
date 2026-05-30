@@ -103,13 +103,26 @@ command -v stow >/dev/null && stow --no-folding zsh p10k || {
 # (Optional) per-host shell config — copy + edit the template
 cp zsh/.config/zsh/90-host.zsh.example ~/.config/zsh/90-$(hostname -s).zsh
 
-# If the host's libc is too old for the bundled gitstatusd (e.g. QNAP on
-# glibc 2.21), opt out via the early-load hook so the p10k prompt doesn't
-# print init errors on every shell start. Other p10k segments still work.
-cat > ~/.zshrc.early.local <<EOF
-typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
-EOF
+# Per-host overrides go in ~/.zshrc.early.local (untracked, sourced
+# before oh-my-zsh + p10k init — useful for POWERLEVEL9K_* vars).
 ```
+
+**QNAP-specific quirks**, in case anyone else runs into them on an embedded zsh build:
+
+1. **`setopt monitor` fails.** Entware's zsh build doesn't allow enabling job control. `gitstatus.plugin.zsh` line 604 (`setopt monitor || return`) aborts p10k's gitstatus init. Patch by replacing `|| return` with `2>/dev/null || true`.
+2. **`mkfifo` is missing.** QNAP's busybox doesn't ship a standalone `mkfifo`, but gitstatusd needs it for IPC. Install it manually because Entware's `coreutils-mkfifo` package can't write to `/opt/libexec` without root:
+   ```sh
+   # On any other Linux/Mac with `ar`+`tar`:
+   curl -sLO http://bin.entware.net/x64-k3.2/coreutils-mkfifo_9.9-2_x64-3.2.ipk
+   # (the .ipk is just a gzipped tarball-of-tarballs)
+   mkdir extract && tar xzf coreutils-mkfifo_9.9-2_x64-3.2.ipk -C extract
+   tar xzf extract/data.tar.gz -C extract
+   scp extract/opt/libexec/mkfifo-coreutils <qnap>:bin/mkfifo
+   ssh <qnap> 'chmod +x ~/bin/mkfifo'
+   # ~/bin is already on the dotfiles PATH (via 00-path.zsh).
+   ```
+
+Both fixes are bundled into `~/bin/qnap-gitstatus-fix` (idempotent re-patcher) on hyperion — run it after any future `cd ~/.oh-my-zsh/custom/themes/powerlevel10k && git pull` to re-apply the gitstatus patch.
 
 Stowed-config quirks on non-Macs are handled automatically by the dotfiles: `.zprofile`'s `brew shellenv` is guarded behind `[[ -x /opt/homebrew/bin/brew ]]`, `.zshenv`'s cargo source is guarded behind `[[ -r ~/.cargo/env ]]`, and the `macos` oh-my-zsh plugin only loads on Darwin. Entware paths (`/opt/bin`, `/opt/usr/bin`) are added to PATH conditionally — Mac hosts skip them because the dirs don't exist.
 
