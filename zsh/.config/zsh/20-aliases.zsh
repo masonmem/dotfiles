@@ -41,6 +41,14 @@ if command -v pip3 >/dev/null 2>&1; then
   alias pip='pip3'
 fi
 
+# --- Claude Code ---
+# `cc` is the C compiler in non-interactive shells (Makefiles, build scripts
+# still find /usr/bin/cc); only typing `cc` at an interactive prompt is
+# remapped. Guarded so hosts without the CLI keep `cc` as the compiler.
+if command -v claude >/dev/null 2>&1; then
+  alias cc='claude'
+fi
+
 # --- Git ---
 if command -v lazygit >/dev/null 2>&1; then
   alias lg='lazygit'
