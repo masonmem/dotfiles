@@ -29,33 +29,28 @@ fi
 # ── Completions fpath (before oh-my-zsh, which calls compinit) ─────────────
 typeset -U fpath
 fpath=(
-  "/opt/homebrew/share/zsh/site-functions"   # Homebrew-managed completions
   "$HOME/.config/zsh/completions"            # cached completions (e.g. kubectl)
   $fpath
 )
+# Homebrew-managed completions (Mac only)
+[[ -d /opt/homebrew/share/zsh/site-functions ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 
 # ── oh-my-zsh ───────────────────────────────────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
-if [[ -z "${DEVCONTAINER}" ]]; then
-  plugins=(
-    git
-    macos
-    kube-ps1
-    vscode
-    zsh-autosuggestions
-    zsh-syntax-highlighting
-  )
-else
-  # Dev containers: skip macOS-only plugin; others work via oh-my-zsh mount
-  plugins=(
-    git
-    kube-ps1
-    vscode
-    zsh-autosuggestions
-    zsh-syntax-highlighting
-  )
+# Plugins universal on every host; the `macos` plugin only loads on Darwin
+# (so the same .zshrc works on Linux/QNAP without errors). DEVCONTAINER=1
+# also skips macos to support that case.
+plugins=(
+  git
+  kube-ps1
+  vscode
+  zsh-autosuggestions
+  zsh-syntax-highlighting
+)
+if [[ "$OSTYPE" == darwin* && -z "${DEVCONTAINER}" ]]; then
+  plugins+=(macos)
 fi
 
 source "$ZSH/oh-my-zsh.sh"
