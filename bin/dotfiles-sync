@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # dotfiles-sync — pull latest dotfiles, install any new brew packages, re-stow.
-# Safe to run repeatedly (idempotent). Designed for solaris (always-on) so a
-# push from navi lands on solaris without manual ssh-and-edit. Also fine on
-# navi as a "catch up after working on a different machine" command.
+# Idempotent and direction-agnostic — same command on every Mac, regardless of
+# where the change you're pulling originated. Bails on a dirty working tree
+# so it won't trample local edits.
+#
+# Prefer `sync-all` (calls this + ai-config-sync) for the common case of
+# "bring everything up to date".
 #
 # Triggers:
 #   - Manual:  `dotfiles-sync`
-#   - Timer:   sh.user.dotfiles-sync launchd agent (opt-in; see README).
+#   - Timer:   sh.user.sync-all launchd agent (opt-in; see README).
 #
 # Conservative by default:
 #   - `git pull --ff-only`        (never rebases or auto-merges)

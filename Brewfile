@@ -75,5 +75,6 @@ brew "uv"                                  # Python pkg/runtime mgr; provides `u
 brew "llm"                                 # Simon Willison's CLI for talking to LLMs
 
 # ── Applications ─────────────────────────────────────────────────────────────
+cask "claude-code"                         # Anthropic's terminal-based AI coding agent
 cask "docker-desktop"
 cask "font-fira-code"                      # Nerd Font for terminal/editor

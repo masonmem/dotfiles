@@ -2,60 +2,103 @@
 
 macOS dev environment. Apple Silicon, zsh, Homebrew. Managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
-## Intent: two-Mac parity, gitops sync
+## Intent
 
-This repo is the source of truth for **both** Macs on the tailnet:
+This repo is the source of truth for **every Mac I sign into** — laptop, mini, work machine, whatever. The promise: the same `~/.zshrc`, the same `Brewfile`, the same agent stack (opencode + aider + goose + Claude Code + Copilot CLI), the same aliases on each one. So SSH-ing into any tailnet Mac from a phone (Termius/Blink) drops me into a TTY that feels identical to the laptop I just left.
 
-| Host | Role | Uptime |
-|---|---|---|
-| **navi** (laptop) | Primary dev machine. Code, edit, push. | Comes and goes. |
-| **solaris** (Mac Mini M2 Pro) | Always-on TTY + model host. SSH-into-from-anywhere via Tailscale; runs Ollama, LiteLLM, OWUI, MCP bridges. | 24/7. |
+**Bidirectional flow.** Edit on any Mac → commit → push. On any other Mac, run one command:
 
-The promise: **identical shell environment on both.** Same zsh config, same Brewfile, same opencode + aider + goose wiring, same secrets layout under `~/.ai-config/secrets/` (Copilot CLI still finds them via `~/.copilot/secrets/`, which is a symlink). So `ssh solaris` from a phone (Termius/Blink over Tailscale) drops me into a TTY that feels exactly like navi — same aliases, same models, same agent stack.
+```bash
+sync-all
+```
 
-**Push from navi → pull on solaris.** Edit on the laptop, commit, push to `masonmem/dotfiles`. Then run `dotfiles-sync` on solaris (or wait for the optional launchd timer — see below) and the change propagates: `git pull --ff-only`, `brew bundle --no-upgrade` for any new tools, `stow -R` to re-link. The parallel AI-brain repo (`masonmem/ai-config`) is pulled with `ai-config-sync`.
+That pulls the latest, installs any new Homebrew packages added to the [Brewfile](Brewfile), re-stows shell config, and pulls the parallel AI-brain repo (`masonmem/ai-config`) so global skills / MCP / Claude-Code-and-Copilot-CLI instructions stay in sync. Idempotent and direction-agnostic — same command on every host, regardless of where the change originated.
 
-Secrets (`~/.ai-config/secrets/*`) are **not** in this repo; they're copied out-of-band and mirrored manually when rotated (`secrets-push solaris`).
+Secrets (`~/.ai-config/secrets/*`) are **not** in this repo (gitignored, plaintext, `chmod 600`). They cross-sync between hosts with `secrets-push <other-host>` — see [the secrets discussion in `masonmem/homelab` § Operator-workstation secrets](https://github.com/masonmem/homelab/blob/main/docs/security.md#operator-workstation-secrets--aiconfigsecrets-safe).
 
 ---
 
-## Bootstrap a new machine
+## Bootstrap a fresh Mac
 
 ```bash
-# 1. Install Homebrew, then restore all formulae + casks
+# 1. Install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. Clone this repo and the AI-brain repo
+git clone git@github.com:masonmem/dotfiles.git    ~/dotfiles
+git clone git@github.com:masonmem/ai-config.git   ~/.ai-config
+
+# 3. Install everything in the Brewfile (formulae + casks — pinned set)
 brew bundle --file=~/dotfiles/Brewfile
 
-# 2. Install Rust (needed for .zshenv cargo env)
+# 4. Install Rust toolchain (needed for the .zshenv cargo env)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# 3. Clone and stow
-git clone git@github.com:masonmem/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-stow --no-folding zsh p10k tmux git nvim lazygit atuin
+# 5. Stow the dotfile packages you want (see Packages table below)
+cd ~/dotfiles && stow --no-folding zsh p10k tmux git nvim lazygit atuin
 
-# 4. Create machine-local files (see "What's NOT stowed" below)
-cp ~/.gitconfig.local.example ~/.gitconfig.local   # fill in name/email
-mkdir -p ~/.nvm ~/.ssh/sockets
+# 6. Set up the AI-brain symlinks (Copilot CLI and/or Claude Code)
+# Copilot CLI:
+mkdir -p ~/.copilot
+ln -sfn ~/.ai-config/instructions.md          ~/.copilot/copilot-instructions.md
+ln -sfn ~/.ai-config/skills                   ~/.copilot/skills
+ln -sfn ~/.ai-config/bin                      ~/.copilot/bin
+ln -sfn ~/.ai-config/mcp.json                 ~/.copilot/mcp-config.json
+ln -sfn ~/.ai-config/secrets                  ~/.copilot/secrets
+ln -sfn ~/.ai-config/copilot/settings.json    ~/.copilot/settings.json
+# Claude Code (if installed):
+bash ~/.ai-config/bin/bootstrap-claude.sh
+
+# 7. Per-Mac files (templates / examples — none of these are stowed)
+cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config       # then edit for this Mac's hosts
+${EDITOR:-vi} ~/.gitconfig.local                  # name/email
+# Optional: per-host shell overrides
+cp ~/dotfiles/zsh/.config/zsh/90-host.zsh.example \
+   ~/.config/zsh/90-$(hostname -s).zsh
+
+# 8. Populate machine-local secrets (or sync from another Mac you trust)
+mkdir -p ~/.ai-config/secrets   # placeholder; populate per-tool as needed
+# From an already-set-up Mac: ssh into this one and run `secrets-push <this-mac>`
 ```
 
-> **Why `--no-folding`?** Without it, stow symlinks entire directories (e.g. `~/.config/zsh → dotfiles/zsh/.config/zsh`). With `--no-folding`, stow links individual files, leaving room for local (untracked) files like `90-work.zsh` alongside the stowed ones.
+> **Why `--no-folding`?** Without it, stow symlinks entire directories (`~/.config/zsh → dotfiles/zsh/.config/zsh`). With it, stow links individual files, leaving room for untracked per-host overlays (`90-<hostname>.zsh`) alongside the stowed files.
+
+---
+
+## Day-to-day sync
+
+```bash
+sync-all              # pull dotfiles + ai-config; install new brew packages
+sync-all dotfiles     # only one if you want
+sync-all ai-config
+```
+
+Same command on every Mac. Bails on a dirty working tree in either repo (won't trample local edits).
+
+After rotating a secret on machine A and you want machine B to pick it up:
+
+```bash
+# from A:
+secrets-push B
+```
+
+(Or hostname instead of "B" — `secrets-push` defaults to `solaris` since that's the always-on box, but accepts any SSH host alias.)
 
 ---
 
 ## How stow works
 
-Each subdirectory is a **package**. Running `stow <package>` creates symlinks from `~` into that package, mirroring its directory structure. Files live in `~/dotfiles/` — edits are live immediately.
+Each subdirectory is a **package**. `stow <package>` creates symlinks from `~` into that package, mirroring its directory structure. Files live in `~/dotfiles/` — edits to either the symlink target or the repo file are live immediately.
 
 ```text
-~/dotfiles/zsh/.zshrc  →  stow  →  ~/.zshrc  (symlink)
-~/dotfiles/zsh/.config/zsh/20-aliases.zsh  →  ~/.config/zsh/20-aliases.zsh  (symlink)
+~/dotfiles/zsh/.zshrc                       →  stow  →  ~/.zshrc                       (symlink)
+~/dotfiles/zsh/.config/zsh/20-aliases.zsh   →  stow  →  ~/.config/zsh/20-aliases.zsh   (symlink)
 ```
 
-| Operation              | Command                        |
-| ---------------------- | ------------------------------ |
-| Link a package         | `stow --no-folding <package>`  |
-| Unlink a package       | `stow -D <package>`            |
+| Operation              | Command                          |
+| ---------------------- | -------------------------------- |
+| Link a package         | `stow --no-folding <package>`    |
+| Unlink a package       | `stow -D <package>`              |
 | Re-link after changes  | `stow --no-folding -R <package>` |
 | Preview (dry run)      | `stow -n --no-folding <package>` |
 
@@ -63,68 +106,74 @@ Each subdirectory is a **package**. Running `stow <package>` creates symlinks fr
 
 ## Packages
 
-| Package    | What it manages                                    | Stow on all machines? |
-| ---------- | -------------------------------------------------- | --------------------- |
-| `zsh/`     | `.zshrc`, `.zprofile`, `.zshenv`, `.config/zsh/**` | ✅ Yes                |
-| `p10k/`    | `.p10k.zsh`                                        | ✅ Yes                |
-| `tmux/`    | `.tmux.conf`                                       | ✅ Yes                |
-| `git/`     | `.gitconfig`                                       | ✅ Yes                |
-| `nvim/`    | `.config/nvim/init.lua`                            | ✅ Yes                |
-| `lazygit/` | `.config/lazygit/config.yml`                       | ✅ Yes                |
-| `atuin/`   | `.config/atuin/config.toml`, themes                | ✅ Yes                |
-| `ollama/`  | Local Ollama tuning + LiteLLM gateway env (`litellm-keys`, aider/opencode wiring) | Opt-in (see `ollama/README.md`) |
-| `ssh/`     | `.ssh/config`                                      | ❌ Template only      |
-
-> **`ssh/` is not stowed** — SSH configs contain machine-specific hosts, keys, and algorithms. Keep `~/.ssh/config` local on each machine. The `ssh/` package is a reference template for bootstrapping new machines (`cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config`, then edit).
+| Package    | What it manages                                                          | Stow universally?              |
+| ---------- | ------------------------------------------------------------------------ | ------------------------------ |
+| `zsh/`     | `.zshrc`, `.zprofile`, `.zshenv`, `.config/zsh/**`                       | ✅ Yes                          |
+| `p10k/`    | `.p10k.zsh`                                                              | ✅ Yes                          |
+| `tmux/`    | `.tmux.conf`                                                             | ✅ Yes                          |
+| `git/`     | `.gitconfig`                                                             | ✅ Yes                          |
+| `nvim/`    | `.config/nvim/init.lua`                                                  | ✅ Yes                          |
+| `lazygit/` | `.config/lazygit/config.yml`                                             | ✅ Yes                          |
+| `atuin/`   | `.config/atuin/config.toml`, themes                                      | ✅ Yes                          |
+| `ollama/`  | Local Ollama tuning + LiteLLM gateway env, agent wiring (aider/opencode/goose) | **Opt-in.** Don't stow on work machines unless you've cleared local-LLM tooling with your employer. |
+| `ssh/`     | `.ssh/config`                                                            | ❌ Template only — copy + edit  |
 
 ---
 
 ## What's NOT stowed (and why)
 
-These files live on each machine but are **not tracked in the repo**. They contain machine-specific or sensitive values.
+Machine-specific or sensitive — kept on each Mac, not in the repo.
 
-| File                   | Purpose                                       | Create manually          |
-| ---------------------- | --------------------------------------------- | ------------------------ |
-| `~/.gitconfig.local`   | `[user]` name/email, machine-specific URLs    | Yes — `[include]` loads it |
-| `~/.gitignore_global`  | Global git ignores (DS_Store, .env, etc.)     | Yes                      |
-| `~/.ssh/config`        | SSH hosts, keys, algorithms                   | Yes (copy from `ssh/` template) |
-| `~/.config/zsh/90-*.zsh` | Machine-specific shell config (k8s, paths) | Optional — copy from `90-host.zsh.example` |
-| `~/.nvm/`             | Node versions managed by nvm                   | `mkdir -p ~/.nvm`        |
+| File                                  | Purpose                                          | Bootstrap                                                          |
+| ------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
+| `~/.gitconfig.local`                  | `[user]` name/email, Mac-local URLs              | Create manually — `[include]` from `~/.gitconfig` loads it         |
+| `~/.gitignore_global`                 | Global git ignores (`.DS_Store`, `.env`, etc.)   | Create manually                                                    |
+| `~/.ssh/config`                       | SSH hosts, keys, algorithms                      | `cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config` then edit            |
+| `~/.config/zsh/90-<hostname>.zsh`     | Per-host shell overrides (`k8s` contexts, etc.)  | Copy `90-host.zsh.example` to `90-<hostname>.zsh`                  |
+| `~/.nvm/`                             | Node versions managed by nvm                     | `mkdir -p ~/.nvm`                                                  |
 
-The `.zshrc` auto-sources all `~/.config/zsh/*.zsh` files — add a numbered file (e.g. `90-work.zsh`) for machine-specific config without touching the repo.
+The `.zshrc` auto-sources `~/.config/zsh/*.zsh` in alphabetical order. Numbered files in the 90-* range run last — perfect for overriding earlier aliases or env vars per host.
 
 ---
 
 ## What each file does
 
-| File                               | Purpose                                                             |
-| ---------------------------------- | ------------------------------------------------------------------- |
-| `Brewfile`                         | Curated list of brew formulae + casks (shared across machines)      |
-| `scripts/devcontainer-tools.sh`    | Installs CLI tools inside Linux dev containers                      |
-| `~/.zshrc`                         | Shell entry point — loads oh-my-zsh + sources `~/.config/zsh/*.zsh` |
-| `~/.zshenv`                        | Cargo env (runs for every shell, including scripts)                 |
-| `~/.zprofile`                      | Homebrew shellenv + pipx PATH (login shells)                        |
-| `~/.config/zsh/00-path.zsh`        | PATH deduplication                                                  |
-| `~/.config/zsh/05-devcontainer.zsh`| Auto-installs tools on first container shell launch                 |
-| `~/.config/zsh/10-env.zsh`         | EDITOR, XDG dirs, BAT_THEME, NVM_DIR                                |
-| `~/.config/zsh/20-aliases.zsh`     | Modern CLI aliases: bat, eza, kubecolor, lazygit (all `command -v`-guarded so missing binaries on hyperion/Linux don't shadow the real ones) |
-| `~/.config/zsh/90-host.zsh.example`| Template for per-host overrides — copy to `90-<hostname>.zsh` (untracked) |
-| `~/.config/zsh/30-completions.zsh` | kubectl completion cache + kubecolor compdef                        |
-| `~/.config/zsh/40-tools.zsh`       | fzf (Ctrl-T/Alt-C), atuin (Ctrl-R), zoxide (replaces `cd`)          |
-| `~/.config/zsh/70-nvm.zsh`         | Lazy NVM — loads Node only when first invoked                       |
-| `~/.gitconfig`                     | delta pager, aliases, `[include] ~/.gitconfig.local`                |
-| `~/.config/nvim/init.lua`          | Neovim — lazy.nvim, treesitter, telescope, catppuccin               |
-| `~/.config/lazygit/config.yml`     | lazygit — delta diffs, catppuccin theme, nvim integration           |
-| `~/.p10k.zsh`                      | Powerlevel10k prompt config                                         |
-| `~/.tmux.conf`                     | tmux — prefix Ctrl-B, mouse, vim nav, catppuccin status bar         |
+| File                                  | Purpose                                                                                            |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `Brewfile`                            | Curated list of formulae + casks (shared across machines)                                          |
+| `bin/sync-all`                        | One-command pull of dotfiles + ai-config + brew bundle                                             |
+| `bin/dotfiles-sync`                   | Pull this repo + brew bundle + re-stow                                                             |
+| `bin/secrets-push`                    | Rsync `~/.ai-config/secrets/` to another Mac (chmod 600 enforced)                                  |
+| `bin/dexec`                           | Convenience helper for `docker exec`                                                               |
+| `scripts/devcontainer-tools.sh`       | Installs CLI tools inside Linux dev containers                                                     |
+| `~/.zshrc`                            | Shell entry point — loads oh-my-zsh + sources `~/.config/zsh/*.zsh`                                |
+| `~/.zshenv`                           | Cargo env (runs for every shell, including scripts)                                                |
+| `~/.zprofile`                         | Homebrew shellenv + pipx PATH (login shells)                                                       |
+| `~/.config/zsh/00-path.zsh`           | PATH deduplication                                                                                 |
+| `~/.config/zsh/05-devcontainer.zsh`   | Auto-installs tools on first container shell launch                                                |
+| `~/.config/zsh/10-env.zsh`            | EDITOR, XDG dirs, BAT_THEME, NVM_DIR                                                               |
+| `~/.config/zsh/20-aliases.zsh`        | Modern CLI aliases (bat/eza/kubecolor/lazygit/nvim) — all `command -v`-guarded so missing tools don't shadow real ones |
+| `~/.config/zsh/30-completions.zsh`    | kubectl completion cache + kubecolor compdef                                                       |
+| `~/.config/zsh/40-tools.zsh`          | fzf (Ctrl-T/Alt-C), atuin (Ctrl-R), zoxide (replaces `cd`)                                         |
+| `~/.config/zsh/70-nvm.zsh`            | Lazy NVM — loads Node only when first invoked                                                      |
+| `~/.config/zsh/90-host.zsh.example`   | Template for per-host overrides — copy to `90-<hostname>.zsh` (untracked)                          |
+| `~/.gitconfig`                        | delta pager, aliases, `[include] ~/.gitconfig.local`                                               |
+| `~/.config/nvim/init.lua`             | Neovim — lazy.nvim, treesitter, telescope, catppuccin                                              |
+| `~/.config/lazygit/config.yml`        | lazygit — delta diffs, catppuccin theme, nvim integration                                          |
+| `~/.p10k.zsh`                         | Powerlevel10k prompt config                                                                        |
+| `~/.tmux.conf`                        | tmux — prefix Ctrl-B, mouse, vim nav, catppuccin status bar                                        |
 
 ---
 
 ## Shell structure
 
-`.zshrc` is a thin loader. The real config lives in numbered files under `~/.config/zsh/`. Source order matters, hence the numeric prefixes. Add a new file and it gets picked up automatically on next shell start.
+`.zshrc` is a thin loader. The real config lives in numbered files under `~/.config/zsh/`. Source order matters, hence the numeric prefixes. Add a new file and it's picked up automatically on next shell start.
+
+**Per-host overrides:** copy `90-host.zsh.example` to `~/.config/zsh/90-<hostname>.zsh` (untracked) for anything Mac-specific. Sources last, so it can override anything earlier in the chain.
 
 **Devcontainer support:** `.zshrc` detects the `DEVCONTAINER=1` env var and adjusts plugins accordingly (skips macOS-only plugins). The `05-devcontainer.zsh` file bootstraps CLI tools on first shell open inside a container.
+
+**Tooling note:** every alias in `20-aliases.zsh` that depends on an optional binary (`bat`, `eza`, `nvim`, `lazygit`, `kubecolor`, `yt-dlp`) is gated with `command -v` so a host without the tool falls back to the underlying command (`cat`, `ls`, `vi`, etc.) instead of shadowing it with something missing. This makes the same config usable on minimal hosts (Linux dev containers, NAS shells with limited tooling) without per-host carve-outs.
 
 Key tooling:
 
@@ -136,20 +185,7 @@ Key tooling:
 
 ---
 
-## Keeping machines in sync
-
-### Pulling dotfile changes
-
-Both machines point to the same repo. On either machine:
-
-```bash
-cd ~/dotfiles && git pull
-stow --no-folding -R zsh p10k tmux git nvim lazygit atuin
-```
-
-Stow `-R` (restow) removes old symlinks and creates new ones — handles added/removed files.
-
-### Brewfile workflow
+## Brewfile workflow
 
 The Brewfile is a curated manifest of top-level packages (not a dump of everything installed). To keep it in sync:
 
@@ -159,34 +195,28 @@ brew bundle --file=~/dotfiles/Brewfile
 
 # After manually installing something new you want everywhere:
 # → Edit ~/dotfiles/Brewfile, add the line, commit & push
+# → Other Macs pick it up next time they run `sync-all`
 
-# See what's installed but NOT in the Brewfile (finds drift):
+# See what's installed but NOT in the Brewfile (drift):
 brew bundle cleanup --file=~/dotfiles/Brewfile
 
-# See what's in the Brewfile but NOT installed (finds missing):
+# See what's in the Brewfile but NOT installed (missing):
 brew bundle check --file=~/dotfiles/Brewfile --verbose
 ```
 
-> **Don't use `brew bundle dump`** to overwrite the Brewfile — it captures every transitive dependency and machine-specific noise. Maintain the Brewfile manually as the "what I want" list.
-
-### Adding a new tool
-
-1. `brew install <tool>` on either machine
-2. Add it to `~/dotfiles/Brewfile` with a comment
-3. Commit, push
-4. On other machine: `git pull && brew bundle --file=~/dotfiles/Brewfile`
+> **Don't use `brew bundle dump`** to overwrite the Brewfile — it captures every transitive dependency and machine-specific noise. Maintain the Brewfile manually as the "what I want everywhere" list.
 
 ---
 
 ## Devcontainer support
 
-The shell config is designed to work seamlessly inside Linux dev containers. The setup:
+The shell config is designed to work inside Linux dev containers. The setup:
 
-1. **Mount host config into container** — `.zshrc`, `.oh-my-zsh`, `.p10k.zsh`, `~/.config/zsh/`, git config, nvim/lazygit config
-2. **Auto-install CLI tools** — `05-devcontainer.zsh` runs `scripts/devcontainer-tools.sh` on first shell open (installs bat, eza, fd, rg, fzf, zoxide, atuin, lazygit, nvim, delta from pre-built Linux binaries)
-3. **Graceful degradation** — all tool init scripts use `command -v` guards; if a tool isn't available, it's silently skipped
+1. **Mount host config into container** — `.zshrc`, `.oh-my-zsh`, `.p10k.zsh`, `~/.config/zsh/`, git config, nvim/lazygit config.
+2. **Auto-install CLI tools** — `05-devcontainer.zsh` runs `scripts/devcontainer-tools.sh` on first shell open (installs bat, eza, fd, rg, fzf, zoxide, atuin, lazygit, nvim, delta from pre-built Linux binaries).
+3. **Graceful degradation** — all tool init scripts use `command -v` guards; missing tools are silently skipped (same pattern as the alias guards).
 
-To set up a project's devcontainer, mount these volumes in your `docker-compose.override.yml`:
+Mount these volumes in your `docker-compose.override.yml`:
 
 ```yaml
 volumes:
@@ -231,33 +261,20 @@ git commit -m "feat: ..."
 git push
 ```
 
----
+Other Macs pick up the change on their next `sync-all`.
 
-## Syncing across machines
+### Optional: cron / launchd auto-sync
 
-After committing on one machine, propagate to the other:
+`sync-all` runs cleanly under launchd. On a Mac you want to keep up-to-date passively, drop in `~/Library/LaunchAgents/sh.user.sync-all.plist` with `StartInterval` of 600 (10 min) pointing at `/opt/homebrew/bin/sync-all` (or your equivalent path). Mirror the structure used by the `notes-sync` / `komodo-monitor` plists in the homelab repo. Not enabled by default — opt in when you trust the flow.
 
-```sh
-# On the other machine (or via ssh):
-dotfiles-sync
-```
-
-What it does (idempotent, refuses to run on a dirty tree):
-1. `git pull --ff-only` (never rebase / auto-merge)
-2. `brew bundle --no-upgrade` — installs missing formulae from `Brewfile`, does NOT upgrade existing
-3. `stow --no-folding -R` each package — safe re-link
-
-### Optional: auto-sync on solaris via launchd
-
-solaris is the always-on box, so it's the natural target for a timer. Drop in `~/Library/LaunchAgents/sh.user.dotfiles-sync.plist` with `StartInterval` of e.g. 600 (10 min) and `ProgramArguments` pointing at `dotfiles-sync`. Mirror the pattern used by `sh.user.notes-sync.plist`. Not enabled by default — opt in when you trust the flow.
-
-### Sanity-check parity
+### Sanity-check parity across two Macs
 
 ```sh
-# diff Brewfile vs installed formulae on either host
-brew bundle check --file=~/dotfiles/Brewfile
-
-# confirm same dotfiles HEAD on both
-ssh solaris 'git -C ~/dotfiles rev-parse HEAD'
+# Same dotfiles HEAD?
+ssh <other-mac> 'git -C ~/dotfiles rev-parse HEAD'
 git -C ~/dotfiles rev-parse HEAD
+
+# Same Brewfile state?
+brew bundle check --file=~/dotfiles/Brewfile
+ssh <other-mac> '/opt/homebrew/bin/brew bundle check --file=~/dotfiles/Brewfile'
 ```
