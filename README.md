@@ -16,6 +16,18 @@ That pulls the latest, installs any new Homebrew packages added to the [Brewfile
 
 Secrets (`~/.ai-config/secrets/*`) are **not** in this repo (gitignored, plaintext, `chmod 600`). They cross-sync between hosts with `secrets-push <other-host>` — see [the secrets discussion in `masonmem/homelab` § Operator-workstation secrets](https://github.com/masonmem/homelab/blob/main/docs/security.md#operator-workstation-secrets--aiconfigsecrets-safe).
 
+## Which machines get what
+
+| Host             | Stow packages                         | brew         | `~/.ai-config` | Secrets |
+| ---------------- | ------------------------------------- | ------------ | -------------- | ------- |
+| **navi** (laptop)     | everything (incl. `ollama`)      | Brewfile     | ✅ full         | ✅       |
+| **solaris** (mini)    | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/solaris.Brewfile` | ✅ full | ✅ |
+| **hyperion** (QNAP)   | `zsh p10k git` via manual ln loop (no stow) | none — Entware `opkg` | ❌ none | sops age key only |
+| **work MacBook**      | base set, **no `ollama`**        | Brewfile     | subset — no personal secrets | ❌ |
+| **devcontainers**     | nothing stowed — host mounts `.zshrc` + config read-only | none | ❌ | ❌ |
+
+Per-host package choice lives in `~/.config/dotfiles/packages` (see [Per-host package selection](#per-host-package-selection)).
+
 ---
 
 ## Bootstrap a fresh Mac
@@ -41,8 +53,15 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 #    these are NOT in the Brewfile; the omz custom/ layout is the only mechanism)
 bash ~/dotfiles/bin/bootstrap-shell
 
-# 7. Stow the dotfile packages you want (see Packages table below)
+# 7. Stow the dotfile packages you want (see Packages table below), and
+#    record the choice so dotfiles-sync re-stows the same set
+#    (see "Per-host package selection")
 cd ~/dotfiles && stow --no-folding zsh p10k tmux git nvim lazygit atuin
+mkdir -p ~/.config/dotfiles
+printf '%s\n' zsh p10k tmux git nvim lazygit atuin > ~/.config/dotfiles/packages
+# Personal Macs only — ollama is opt-in (local-LLM + agent wiring):
+#   stow --no-folding ollama && echo ollama >> ~/.config/dotfiles/packages
+#   then see ollama/README.md and ollama/launchagents/README.md (launchd agents)
 
 # 8. Set up the AI-brain symlinks (Copilot CLI and/or Claude Code)
 # Copilot CLI:
@@ -58,6 +77,7 @@ bash ~/.ai-config/bin/bootstrap-claude.sh
 
 # 9. Per-Mac files (templates / examples — none of these are stowed)
 cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config       # then edit for this Mac's hosts
+mkdir -p ~/.ssh/sockets && chmod 700 ~/.ssh ~/.ssh/sockets   # ControlPath mux dir
 ${EDITOR:-vi} ~/.gitconfig.local                  # name/email
 # Optional: per-host shell overrides
 cp ~/dotfiles/zsh/.config/zsh/90-host.zsh.example \
@@ -210,6 +230,8 @@ printf '%s\n' zsh p10k tmux git nvim lazygit atuin ollama > ~/.config/dotfiles/p
 # hyperion:     printf '%s\n' zsh p10k git > ~/.config/dotfiles/packages
 ```
 
+Brew packages vary per host the same way: shared `Brewfile` everywhere, plus an optional `Brewfile.d/<host>.Brewfile` that `dotfiles-sync` installs automatically — see "Per-host extras" under [Brewfile workflow](#brewfile-workflow).
+
 ---
 
 ## What's NOT stowed (and why)
@@ -219,7 +241,6 @@ Machine-specific or sensitive — kept on each Mac, not in the repo.
 | File                                  | Purpose                                          | Bootstrap                                                          |
 | ------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
 | `~/.gitconfig.local`                  | `[user]` name/email, host-local URLs, and per-host overrides for stowed config (e.g. set `[core] pager = less -FRX` on hosts that don't have `delta` installed) | Create manually — `[include]` from `~/.gitconfig` loads it (last include wins on duplicate keys) |
-| `~/.gitignore_global`                 | Global git ignores (`.DS_Store`, `.env`, etc.)   | Create manually                                                    |
 | `~/.ssh/config`                       | SSH hosts, keys, algorithms                      | `cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config` then edit            |
 | `~/.config/zsh/90-<hostname>.zsh`     | Per-host shell overrides (`k8s` contexts, etc.)  | Copy `90-host.zsh.example` to `90-<hostname>.zsh`                  |
 | `~/.nvm/`                             | Node versions managed by nvm                     | `mkdir -p ~/.nvm`                                                  |
@@ -239,7 +260,7 @@ The `.zshrc` auto-sources `~/.config/zsh/*.zsh` in alphabetical order. Numbered 
 | `bin/dexec`                           | Convenience helper for `docker exec`                                                               |
 | `scripts/devcontainer-tools.sh`       | Installs CLI tools inside Linux dev containers                                                     |
 | `~/.zshrc`                            | Shell entry point — loads oh-my-zsh + sources `~/.config/zsh/*.zsh`                                |
-| `~/.zshenv`                           | Cargo env (runs for every shell, including scripts)                                                |
+| `~/.zshenv`                           | Every-shell PATH (~/bin, Entware, Container Station, Homebrew, ai-config/bin) + cargo env + `_ZO_DOCTOR` |
 | `~/.zprofile`                         | Homebrew shellenv + pipx PATH (login shells)                                                       |
 | `~/.config/zsh/00-path.zsh`           | PATH deduplication                                                                                 |
 | `~/.config/zsh/05-devcontainer.zsh`   | Auto-installs tools on first container shell launch                                                |
@@ -365,7 +386,7 @@ Other Macs pick up the change on their next `sync-all`.
 
 ### Optional: cron / launchd auto-sync
 
-`sync-all` runs cleanly under launchd. On a Mac you want to keep up-to-date passively, drop in `~/Library/LaunchAgents/sh.user.sync-all.plist` with `StartInterval` of 600 (10 min) pointing at `/opt/homebrew/bin/sync-all` (or your equivalent path). Mirror the structure used by the `notes-sync` / `komodo-monitor` plists in the homelab repo. Not enabled by default — opt in when you trust the flow.
+`sync-all` runs cleanly under launchd. On a Mac you want to keep up-to-date passively, drop in `~/Library/LaunchAgents/sh.user.sync-all.plist` with `StartInterval` of 600 (10 min) pointing at `$HOME/dotfiles/bin/sync-all` (launchd needs the absolute path; it is never in `/opt/homebrew/bin`). Mirror the structure used by the `notes-sync` / `komodo-monitor` plists in the homelab repo. Not enabled by default — opt in when you trust the flow.
 
 ### Sanity-check parity across two Macs
 
