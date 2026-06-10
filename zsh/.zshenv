@@ -22,6 +22,7 @@ unset _d
 # `#!/usr/bin/env python3` shebangs must resolve to Homebrew Python
 # (3.11+), not the CommandLineTools 3.9.
 [[ -d /opt/homebrew/bin ]] && export PATH="/opt/homebrew/bin:$PATH"
+[[ -d "$HOME/dotfiles/bin" ]] && export PATH="$HOME/dotfiles/bin:$PATH"
 [[ -d "$HOME/.ai-config/bin" ]] && export PATH="$HOME/.ai-config/bin:$PATH"
 
 # Cargo env (only on hosts where rustup has been installed)
