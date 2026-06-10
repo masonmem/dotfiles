@@ -56,7 +56,7 @@ converge() {
     git clone "$url" "$dest"
     git -C "$dest" checkout --quiet "$ref" 2>/dev/null \
       || warn "$name: cloned but could not check out pin $ref"
-    [ "$dest" = "$OMZ/custom/themes/powerlevel10k" ] && P10K_CHANGED=1
+    if [ "$dest" = "$OMZ/custom/themes/powerlevel10k" ]; then P10K_CHANGED=1; fi
     return
   fi
 
@@ -87,7 +87,7 @@ converge() {
   fi
 
   if git -C "$dest" checkout --quiet "$ref" 2>/dev/null; then
-    [ "$dest" = "$OMZ/custom/themes/powerlevel10k" ] && P10K_CHANGED=1
+    if [ "$dest" = "$OMZ/custom/themes/powerlevel10k" ]; then P10K_CHANGED=1; fi
   else
     warn "$name: could not check out pin $ref (still at ${cur%"${cur#???????}"})."
   fi
