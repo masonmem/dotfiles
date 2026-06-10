@@ -123,7 +123,24 @@ cp zsh/.config/zsh/90-host.zsh.example ~/.config/zsh/90-$(hostname -s).zsh
    # ~/bin is already on the dotfiles PATH (via 00-path.zsh).
    ```
 
-Both fixes are bundled into `~/bin/qnap-gitstatus-fix` (idempotent re-patcher) on hyperion — run it after any future `cd ~/.oh-my-zsh/custom/themes/powerlevel10k && git pull` to re-apply the gitstatus patch.
+Both fixes are bundled into [`bin/qnap-gitstatus-fix`](bin/qnap-gitstatus-fix) (idempotent re-patcher, tracked in this repo; `~/dotfiles/bin` is on PATH via `00-path.zsh`) — run it after any future `cd ~/.oh-my-zsh/custom/themes/powerlevel10k && git pull` to re-apply the gitstatus patch.
+
+3. **`~/.profile` must hand login shells to zsh.** QNAP owns the sh login flow, so this file stays machine-local (untracked) — recreate it on a rebuild:
+   ```sh
+   export PATH=$PATH:$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg/Tailscale/
+   export PATH=/opt/bin:/opt/sbin:/opt/usr/bin:/opt/usr/sbin:$PATH
+   export PATH=$PATH:/share/CACHEDEV3_DATA/.qpkg/container-station/bin
+
+   # Hand off to zsh for interactive logins. Use `tty -s` which is the
+   # canonical "is stdin a tty?" check and works even when sshd does not
+   # export SSH_TTY (QNAP busybox sshd behavior).
+   if [ -x /opt/bin/zsh ] && [ -z "$ZSH_VERSION" ] && [ -z "$SSH_ORIGINAL_COMMAND" ] && tty -s; then
+     export SHELL=/opt/bin/zsh
+     exec /opt/bin/zsh -l
+   fi
+   ```
+
+4. **Suggested `90-hyperion.zsh` starting point** (per-host overrides are untracked by design — see "What's NOT stowed"): short git/docker aliases, e.g. `alias g=git gs="git status" d=docker dc="docker compose"` and `alias dcontainers='docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"'`.
 
 Stowed-config quirks on non-Macs are handled automatically by the dotfiles: `.zprofile`'s `brew shellenv` is guarded behind `[[ -x /opt/homebrew/bin/brew ]]`, `.zshenv`'s cargo source is guarded behind `[[ -r ~/.cargo/env ]]`, and the `macos` oh-my-zsh plugin only loads on Darwin. Entware paths (`/opt/bin`, `/opt/usr/bin`) are added to PATH conditionally — Mac hosts skip them because the dirs don't exist.
 

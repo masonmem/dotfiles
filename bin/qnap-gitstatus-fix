@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# qnap-gitstatus-fix — re-apply the QNAP-specific powerlevel10k gitstatus
+# patches after a p10k git pull. Idempotent.
+#
+# Two QNAP-specific issues this works around:
+#   1. Entware zsh build can't enable the MONITOR (job-control) shell
+#      option. gitstatus.plugin.zsh has `setopt monitor || return` which
+#      causes init to fail. We change the `|| return` to `2>/dev/null
+#      || true` so failure is tolerated.
+#   2. gitstatusd needs mkfifo (POSIX named pipes). QNAP's busybox
+#      doesn't ship a standalone mkfifo. We install one at ~/bin/mkfifo
+#      (extracted from coreutils-mkfifo Entware .ipk into a user-writable
+#      location since /opt isn't writable by acinm).
+#
+# Run after: cd ~/.oh-my-zsh/custom/themes/powerlevel10k && git pull
+set -euo pipefail
+
+PLUGIN=~/.oh-my-zsh/custom/themes/powerlevel10k/gitstatus/gitstatus.plugin.zsh
+OLD='      setopt monitor || return'
+NEW='      setopt monitor 2>/dev/null || true  # QNAP-compat: zsh build lacks MONITOR'
+
+if grep -qF "$NEW" "$PLUGIN"; then
+  echo "gitstatus plugin: already patched"
+else
+  # In-place via a temp file (sed -i isn't portable + sed quoting is fragile)
+  python3 - "$PLUGIN" <<PYEOF
+import sys
+p = sys.argv[1]
+s = open(p).read()
+old = """$OLD"""
+new = """$NEW"""
+if old in s:
+    open(p, 'w').write(s.replace(old, new))
+    print("gitstatus plugin: patched")
+else:
+    print("gitstatus plugin: nothing to patch (line not found — was upstream rewritten?)")
+PYEOF
+fi
+
+if [[ -x ~/bin/mkfifo ]]; then
+  echo "~/bin/mkfifo: present"
+else
+  echo "~/bin/mkfifo: MISSING. Re-run the install from your dotfiles bootstrap docs."
+fi
