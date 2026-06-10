@@ -15,7 +15,7 @@ aider() {
     key="$(<"$HOME/.copilot/secrets/litellm-master-key.txt")"
   fi
   if [[ -z "$key" ]]; then
-    print -u2 "aider: no AIDER_LITELLM_KEY available — run 'litellm-keys load' (see ~/dotfiles/ollama/bin/litellm-keys)"
+    print -u2 "aider: no AIDER_LITELLM_KEY available — run 'litellm-keys pull' (or 'litellm-keys mint aider'; see ~/dotfiles/ollama/bin/litellm-keys)"
     return 1
   fi
   OPENAI_API_KEY="$key" command aider "$@"
