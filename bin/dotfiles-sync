@@ -20,7 +20,8 @@ set -euo pipefail
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-log() { printf '\033[36m[dotfiles-sync]\033[0m %s\n' "$*"; }
+log()  { printf '\033[36m[dotfiles-sync]\033[0m %s\n' "$*"; }
+warn() { printf '\033[33m[dotfiles-sync] WARN:\033[0m %s\n' "$*" >&2; }
 
 cd "$DOTFILES"
 
@@ -43,15 +44,28 @@ else
   git pull --ff-only --quiet
 fi
 
+# brew_bundle <file> <label> — run a Brewfile, tolerating failure. brew bundle
+# can hard-error for reasons unrelated to our packages (e.g. Homebrew not yet
+# supporting a macOS beta: "unknown or unsupported macOS version: :dunno"); under
+# `set -e` that would abort the whole sync, skipping stow + ai-config. We log and
+# continue instead — the rest of sync is more important than installing a formula.
+brew_bundle() {
+  local file="$1" label="$2"
+  log "brew bundle ($label)…"
+  if ! brew bundle --no-upgrade --file="$file" >/dev/null 2>&1; then
+    warn "brew bundle ($label) failed — continuing without it."
+    warn "  (re-run \`brew bundle --file=$file\` to see why; common on an"
+    warn "   unsupported macOS beta until Homebrew catches up.)"
+  fi
+}
+
 if command -v brew >/dev/null 2>&1; then
-  log "brew bundle (install missing only)…"
-  brew bundle --no-upgrade --file="$DOTFILES/Brewfile" >/dev/null
+  brew_bundle "$DOTFILES/Brewfile" "install missing only"
 
   # Per-host extras: Brewfile.d/<host>.Brewfile (e.g. solaris server formulae)
   HOST_BREWFILE="$DOTFILES/Brewfile.d/$(hostname -s | tr '[:upper:]' '[:lower:]').Brewfile"
   if [[ -f "$HOST_BREWFILE" ]]; then
-    log "brew bundle (host extras: ${HOST_BREWFILE##*/})…"
-    brew bundle --no-upgrade --file="$HOST_BREWFILE" >/dev/null
+    brew_bundle "$HOST_BREWFILE" "host extras: ${HOST_BREWFILE##*/}"
   fi
 else
   log "brew not found — skipping brew bundle (expected on hyperion / Linux)"
