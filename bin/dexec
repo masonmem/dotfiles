@@ -12,6 +12,8 @@
 #
 # Environment:
 #   DEXEC_CONTAINER   Override container name/ID (default: auto-detect)
+#   DEXEC_FALLBACKS   Space-separated fallback container names to try when
+#                     auto-detect finds nothing (default: "nova-lib-devenv devenv dev-container")
 #   DEXEC_WORKDIR     Override working directory inside container
 #   DEXEC_USER        Override user (default: root)
 #   DEXEC_SHELL       Shell for interactive mode (default: zsh, fallback: bash)
@@ -46,8 +48,10 @@ find_container() {
     return
   fi
 
-  # 3. Fallback: look for common devenv container names
-  for name in nova-lib-devenv devenv dev-container; do
+  # 3. Fallback: well-known container names (space-separated, override via
+  #    DEXEC_FALLBACKS)
+  local name
+  for name in ${DEXEC_FALLBACKS:-nova-lib-devenv devenv dev-container}; do
     if docker ps -q --filter "name=$name" 2>/dev/null | grep -q .; then
       echo "$name"
       return
