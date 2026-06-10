@@ -10,6 +10,7 @@ brew "fzf"                                 # fuzzy finder
 brew "htop"                                # interactive process viewer
 brew "jq"                                  # JSON processor
 brew "ripgrep"                             # modern grep replacement
+brew "tealdeer"                            # fast tldr client (aliased in 20-aliases.zsh)
 brew "tree"                                # directory tree viewer
 brew "watch"                               # run command periodically
 brew "wget"                                # HTTP file retriever
@@ -71,9 +72,10 @@ brew "aider"                               # AI pair programming in the terminal
 brew "opencode"                            # terminal-native AI coding agent
 brew "block-goose-cli"                     # goose AI agent (block.xyz)
 brew "uv"                                  # Python pkg/runtime mgr; provides `uvx` for MCP servers
-brew "llm"                                 # Simon Willison's CLI for talking to LLMs
 
 # ── Applications ─────────────────────────────────────────────────────────────
-cask "claude-code"                         # Anthropic's terminal-based AI coding agent
+cask "claude-code@latest"                  # Anthropic's terminal-based AI coding agent (@latest tracks releases faster)
+cask "copilot-cli"                         # GitHub Copilot CLI — part of the core agent stack
 cask "docker-desktop"
-cask "font-fira-code"                      # Nerd Font for terminal/editor
+cask "font-meslo-lg-nerd-font"             # p10k's recommended font — what the prompt glyphs assume
+cask "font-jetbrains-mono-nerd-font"       # editor font
