@@ -1,5 +1,4 @@
 tap "jesseduffield/lazygit"
-tap "romkatv/powerlevel10k"
 
 # ── Core CLI tools ───────────────────────────────────────────────────────────
 brew "bat"                                 # cat with syntax highlighting
@@ -18,13 +17,13 @@ brew "yq"                                  # YAML/JSON/XML processor
 
 # ── Shell ────────────────────────────────────────────────────────────────────
 brew "atuin"                               # shell history database (Ctrl-R)
-brew "powerlevel10k"                       # zsh theme
 brew "stow"                                # symlink farm manager (dotfiles)
 brew "tmux"                                # terminal multiplexer
 brew "zoxide"                              # smarter cd replacement
 brew "zsh"                                 # latest zsh (over macOS system zsh)
-brew "zsh-autosuggestions"                 # fish-like autosuggestions
-brew "zsh-syntax-highlighting"             # command syntax highlighting
+# oh-my-zsh, powerlevel10k, zsh-autosuggestions, zsh-syntax-highlighting are
+# NOT brew-managed — bin/bootstrap-shell git-clones them into ~/.oh-my-zsh/,
+# which is the layout .zshrc actually loads from.
 
 # ── Git ──────────────────────────────────────────────────────────────────────
 brew "git"

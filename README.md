@@ -31,16 +31,20 @@ git clone git@github.com:masonmem/ai-config.git   ~/.ai-config
 # 3. Install everything in the Brewfile (formulae + casks — pinned set)
 brew bundle --file=~/dotfiles/Brewfile
 
-# 3b. Install pipx-managed Python CLIs (not covered by brew bundle; see pipx-tools.txt)
+# 4. Install pipx-managed Python CLIs (not covered by brew bundle; see pipx-tools.txt)
 grep -v '^#' ~/dotfiles/pipx-tools.txt | grep . | xargs -n1 pipx install
 
-# 4. Install Rust toolchain (needed for the .zshenv cargo env)
+# 5. Install Rust toolchain (needed for the .zshenv cargo env)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# 5. Stow the dotfile packages you want (see Packages table below)
+# 6. Install oh-my-zsh + powerlevel10k + zsh plugins (git clone, idempotent —
+#    these are NOT in the Brewfile; the omz custom/ layout is the only mechanism)
+bash ~/dotfiles/bin/bootstrap-shell
+
+# 7. Stow the dotfile packages you want (see Packages table below)
 cd ~/dotfiles && stow --no-folding zsh p10k tmux git nvim lazygit atuin
 
-# 6. Set up the AI-brain symlinks (Copilot CLI and/or Claude Code)
+# 8. Set up the AI-brain symlinks (Copilot CLI and/or Claude Code)
 # Copilot CLI:
 mkdir -p ~/.copilot
 ln -sfn ~/.ai-config/instructions.md          ~/.copilot/copilot-instructions.md
@@ -52,14 +56,14 @@ ln -sfn ~/.ai-config/copilot/settings.json    ~/.copilot/settings.json
 # Claude Code (if installed):
 bash ~/.ai-config/bin/bootstrap-claude.sh
 
-# 7. Per-Mac files (templates / examples — none of these are stowed)
+# 9. Per-Mac files (templates / examples — none of these are stowed)
 cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config       # then edit for this Mac's hosts
 ${EDITOR:-vi} ~/.gitconfig.local                  # name/email
 # Optional: per-host shell overrides
 cp ~/dotfiles/zsh/.config/zsh/90-host.zsh.example \
    ~/.config/zsh/90-$(hostname -s).zsh
 
-# 8. Populate machine-local secrets (or sync from another Mac you trust)
+# 10. Populate machine-local secrets (or sync from another Mac you trust)
 mkdir -p ~/.ai-config/secrets   # placeholder; populate per-tool as needed
 # From an already-set-up Mac: ssh into this one and run `secrets-push <this-mac>`
 ```
@@ -68,7 +72,7 @@ mkdir -p ~/.ai-config/secrets   # placeholder; populate per-tool as needed
 
 ### Bootstrap on a non-Mac host (QNAP, Linux, etc.)
 
-The shell config is portable — same `.zshrc`, `.zprofile`, `.zshenv`, and `~/.config/zsh/*.zsh` work on any host with zsh. The catches: no Homebrew (substitute the host's package manager), and oh-my-zsh / powerlevel10k come via `git clone` instead of brew.
+The shell config is portable — same `.zshrc`, `.zprofile`, `.zshenv`, and `~/.config/zsh/*.zsh` work on any host with zsh. The catch: no Homebrew, so substitute the host's package manager. oh-my-zsh / powerlevel10k come via `bin/bootstrap-shell` (git clone) on every host, Mac or not.
 
 ```bash
 # Adjust the package install line for your host (apt/apk/opkg/pacman/dnf):
@@ -78,14 +82,8 @@ The shell config is portable — same `.zshrc`, `.zprofile`, `.zshenv`, and `~/.
 # Clone the repo (HTTPS if no SSH key yet; switch to SSH after)
 git clone git@github.com:masonmem/dotfiles.git ~/dotfiles
 
-# Install oh-my-zsh + powerlevel10k + the two plugins, manually
-git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
-  ~/.oh-my-zsh/custom/themes/powerlevel10k
-git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
-  ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \
-  ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+# Install oh-my-zsh + powerlevel10k + the two plugins (same script as the Mac path)
+bash ~/dotfiles/bin/bootstrap-shell
 
 # Symlink the tracked files. `stow` works if available; if not (Entware
 # doesn't ship it), do the equivalent by hand — the README's "How stow

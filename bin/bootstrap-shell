@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# bootstrap-shell — install oh-my-zsh + powerlevel10k + the two zsh plugins
+# via git clone. Idempotent: anything already present is skipped.
+#
+# This is the ONLY install mechanism for these. The brew formulae
+# (powerlevel10k, zsh-autosuggestions, zsh-syntax-highlighting) install
+# into /opt/homebrew/share and are never wired into oh-my-zsh — .zshrc
+# loads the theme and plugins from ~/.oh-my-zsh/custom/, so the git-clone
+# layout is what every host (Mac or not) actually uses.
+#
+# Usage: bash ~/dotfiles/bin/bootstrap-shell   (or just `bootstrap-shell`
+# once ~/dotfiles/bin is on PATH). Works on macOS, Linux, and QNAP/Entware —
+# only needs git.
+set -euo pipefail
+
+log() { printf '\033[36m[bootstrap-shell]\033[0m %s\n' "$*"; }
+
+clone() {
+  local url="$1" dest="$2"
+  if [[ -d "$dest" ]]; then
+    log "already present: $dest"
+  else
+    log "cloning $url → $dest"
+    git clone --depth=1 "$url" "$dest"
+  fi
+}
+
+OMZ="${ZSH:-$HOME/.oh-my-zsh}"
+
+clone https://github.com/ohmyzsh/ohmyzsh.git \
+  "$OMZ"
+clone https://github.com/romkatv/powerlevel10k.git \
+  "$OMZ/custom/themes/powerlevel10k"
+clone https://github.com/zsh-users/zsh-autosuggestions \
+  "$OMZ/custom/plugins/zsh-autosuggestions"
+clone https://github.com/zsh-users/zsh-syntax-highlighting \
+  "$OMZ/custom/plugins/zsh-syntax-highlighting"
+
+log "done."
