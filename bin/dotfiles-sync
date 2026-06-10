@@ -57,6 +57,15 @@ else
   log "brew not found — skipping brew bundle (expected on hyperion / Linux)"
 fi
 
+# Converge the git-clone shell framework (oh-my-zsh, p10k, zsh plugins) to the
+# pins in shell-clones.txt. Runs on EVERY host (only needs git) — this is what
+# stops a clone silently rotting years out of date. Cheap: bootstrap-shell
+# no-ops any clone already at its pin and only hits the network when a pin moved.
+if [[ -x "$DOTFILES/bin/bootstrap-shell" ]]; then
+  log "converging shell framework (oh-my-zsh / p10k / plugins → pins)…"
+  "$DOTFILES/bin/bootstrap-shell" || log "WARN: bootstrap-shell reported an issue (continuing)"
+fi
+
 if ! command -v stow >/dev/null 2>&1; then
   log "ERROR: stow not found — install it (brew/apt/opkg), or on hosts without"
   log "stow (hyperion) use the manual ln loop in README § non-Mac bootstrap."

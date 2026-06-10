@@ -1,0 +1,48 @@
+# shell-clones.txt — the git-clone shell framework, DECLARED + PINNED.
+#
+# Why this file exists: oh-my-zsh, powerlevel10k, and the two zsh plugins are
+# NOT in the Brewfile — .zshrc loads the theme + plugins out of
+# ~/.oh-my-zsh/custom/, so a git clone is the only mechanism every host (Mac
+# or QNAP/Entware) actually uses. For years that meant `bootstrap-shell`
+# clone-if-missing left each host frozen at whenever it was first set up: navi
+# silently ran a 2022 powerlevel10k until 2026 and the unified .p10k.zsh
+# couldn't render on it. This file closes that gap — same philosophy as the
+# Brewfile and pipx-tools.txt: declare the dependency, pin the version, and let
+# `bootstrap-shell` CONVERGE every host to the pin (clone if missing, otherwise
+# fetch + checkout the pinned ref). Bump a pin here, commit, and machines move
+# to it on the next `sync-all` / `dotfiles-sync`.
+#
+# Format: one entry per line, three whitespace-separated fields:
+#     <dest-subpath-under-$ZSH>   <git-url>   <pinned-ref>
+#   - dest-subpath: relative to $ZSH (default ~/.oh-my-zsh). "." == $ZSH itself.
+#   - pinned-ref:   a full commit SHA (preferred — exact + reproducible) or a tag.
+#                   Annotate the human-readable version in the trailing comment.
+#   '#' lines and inline '# ...' trailers are comments. Blank lines ignored.
+#
+# Pins below are the audited convergence target: navi's verified-working refs
+# as of 2026-06-10 (navi's prompt is byte-identical to the intended design at
+# these versions). powerlevel10k is pure-zsh + a prebuilt gitstatusd, so the
+# p10k pin is safe on hyperion's Entware x86_64 — no glibc/compile concern. The
+# only host-specific step after a p10k move is re-running `qnap-gitstatus-fix`
+# on hyperion (the QNAP setopt-monitor patch); bootstrap-shell calls it for you.
+#
+# gitstatusd is NOT pinned here: p10k's own gitstatus/install.info pins it to
+# v1.5.4 (the only release) and it travels with whatever p10k ref you check out.
+# fzf / atuin / zoxide / nvm stay brew- (Mac) or opkg- (Entware) managed and are
+# deliberately NOT brought under git-clone management — they're already
+# convergent through their package managers.
+
+# oh-my-zsh — the framework itself. Shell-only; the `macos` plugin is
+# Darwin-guarded in .zshrc, so the same HEAD is safe on hyperion's Entware zsh.
+# Pinned to navi 2026-06-10 master (omz has no release tags — commit pins only).
+.   https://github.com/ohmyzsh/ohmyzsh.git   c954bbb168fc645592c50017de0d0e138db8df5f   # master @ 2026-06-10
+
+# powerlevel10k — the prompt theme. THE live drift discriminator: the unified
+# .p10k.zsh needs a reasonably current p10k to render. v1.20.0-102.
+custom/themes/powerlevel10k   https://github.com/romkatv/powerlevel10k.git   a0c9dbe80be404ff58e3ce5d7cf312582e370635   # v1.20.0-102-ga0c9dbe8
+
+# zsh-autosuggestions — fish-style inline suggestions. v0.7.1-6.
+custom/plugins/zsh-autosuggestions   https://github.com/zsh-users/zsh-autosuggestions   85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5   # v0.7.1-6-g85919cd
+
+# zsh-syntax-highlighting — command-line syntax highlighting. 0.8.0-4.
+custom/plugins/zsh-syntax-highlighting   https://github.com/zsh-users/zsh-syntax-highlighting   1d85c692615a25fe2293bdd44b34c217d5d2bf04   # 0.8.0-4-g1d85c69

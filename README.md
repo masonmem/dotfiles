@@ -49,8 +49,10 @@ grep -v '^#' ~/dotfiles/pipx-tools.txt | grep . | xargs -n1 pipx install
 # 5. Install Rust toolchain (needed for the .zshenv cargo env)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# 6. Install oh-my-zsh + powerlevel10k + zsh plugins (git clone, idempotent —
-#    these are NOT in the Brewfile; the omz custom/ layout is the only mechanism)
+# 6. Install + pin oh-my-zsh + powerlevel10k + zsh plugins (git clone, NOT in
+#    the Brewfile; the omz custom/ layout is the only mechanism). bootstrap-shell
+#    clones-if-missing then converges each clone to the ref pinned in
+#    shell-clones.txt — idempotent, and it also UPDATES an existing stale clone.
 bash ~/dotfiles/bin/bootstrap-shell
 
 # 7. Stow the dotfile packages you want (see Packages table below), and
@@ -92,7 +94,7 @@ mkdir -p ~/.ai-config/secrets   # placeholder; populate per-tool as needed
 
 ### Bootstrap on a non-Mac host (QNAP, Linux, etc.)
 
-The shell config is portable — same `.zshrc`, `.zprofile`, `.zshenv`, and `~/.config/zsh/*.zsh` work on any host with zsh. The catch: no Homebrew, so substitute the host's package manager. oh-my-zsh / powerlevel10k come via `bin/bootstrap-shell` (git clone) on every host, Mac or not.
+The shell config is portable — same `.zshrc`, `.zprofile`, `.zshenv`, and `~/.config/zsh/*.zsh` work on any host with zsh. The catch: no Homebrew, so substitute the host's package manager. oh-my-zsh / powerlevel10k come via `bin/bootstrap-shell` (git clone, pinned by [`shell-clones.txt`](shell-clones.txt) — see [Shell framework pins](#shell-framework-pins-oh-my-zsh--p10k--plugins)) on every host, Mac or not.
 
 ```bash
 # Adjust the package install line for your host (apt/apk/opkg/pacman/dnf):
@@ -184,6 +186,30 @@ secrets-push B
 ```
 
 (Or hostname instead of "B" — `secrets-push` defaults to `solaris` since that's the always-on box, but accepts any SSH host alias.)
+
+---
+
+## Shell framework pins (oh-my-zsh / p10k / plugins)
+
+oh-my-zsh, powerlevel10k, and the two zsh plugins (`zsh-autosuggestions`, `zsh-syntax-highlighting`) are **not** in the Brewfile — `.zshrc` loads the theme + plugins from `~/.oh-my-zsh/custom/`, so a **git clone** is the only mechanism every host (Mac or QNAP/Entware) actually uses. They used to be the one dependency class the repo neither pinned nor updated: `bootstrap-shell` cloned-if-missing only, so each host stayed frozen at whatever it was first set up with — navi silently ran a 2022 p10k until 2026 and the unified `.p10k.zsh` couldn't render on it.
+
+Now they're a **declared, pinned, converging** dependency — same philosophy as the [Brewfile](Brewfile) and [pipx-tools.txt](pipx-tools.txt):
+
+- **[`shell-clones.txt`](shell-clones.txt)** declares each clone's upstream URL + a pinned commit SHA (with the human-readable tag in a comment). This is the single source of truth for which versions every host runs.
+- **[`bin/bootstrap-shell`](bin/bootstrap-shell)** converges to those pins: clone if absent, otherwise `git fetch` + `git checkout <pinned-ref>`. It is idempotent (a clone already at its pin is a cheap no-op — no network), it **brings a stale clone up to the pin** (the bug that rotted navi), and it **will not clobber a clone with local edits** (hyperion's QNAP gitstatus patch) — it warns and skips instead. When it actually moves the p10k ref it clears the stale `~/.cache/gitstatus` and `~/.cache/p10k-instant-prompt-*.zsh` (required for the new p10k to render) and re-runs [`qnap-gitstatus-fix`](bin/qnap-gitstatus-fix) on non-Mac hosts.
+- **`dotfiles-sync` runs `bootstrap-shell` on every host after pulling**, so a normal `sync-all` keeps these current. It only needs `git`, so it works on hyperion (no brew/stow there).
+
+**Update workflow** — same as bumping a Brewfile version:
+
+```bash
+# 1. Update the clone you're testing against, confirm the prompt still renders.
+cd ~/.oh-my-zsh/custom/themes/powerlevel10k && git fetch && git checkout <new-sha>
+# 2. Bump the pin in shell-clones.txt to that SHA (update the tag comment too).
+${EDITOR:-vi} ~/dotfiles/shell-clones.txt
+# 3. Commit + push. Every other machine converges on its next `sync-all`.
+```
+
+> **hyperion note:** the p10k clone carries a local edit (the QNAP `setopt monitor` patch). `bootstrap-shell` detects the dirty tree and **skips** it rather than clobbering the patch — so on hyperion, after bumping the p10k pin you must `git stash` the patch, let `bootstrap-shell` converge, then `qnap-gitstatus-fix` re-applies it (bootstrap-shell calls it automatically once the checkout lands). hyperion's clones are also shallow; `bootstrap-shell` unshallows them on demand to reach the pinned SHA.
 
 ---
 
