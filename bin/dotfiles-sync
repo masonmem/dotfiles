@@ -46,6 +46,13 @@ fi
 log "brew bundle (install missing only)…"
 brew bundle --no-upgrade --file="$DOTFILES/Brewfile" >/dev/null
 
+# Per-host extras: Brewfile.d/<host>.Brewfile (e.g. solaris server formulae)
+HOST_BREWFILE="$DOTFILES/Brewfile.d/$(hostname -s | tr '[:upper:]' '[:lower:]').Brewfile"
+if [[ -f "$HOST_BREWFILE" ]]; then
+  log "brew bundle (host extras: ${HOST_BREWFILE##*/})…"
+  brew bundle --no-upgrade --file="$HOST_BREWFILE" >/dev/null
+fi
+
 log "re-stowing packages…"
 PACKAGES=(zsh p10k tmux git nvim lazygit atuin ollama)
 FAILED=()

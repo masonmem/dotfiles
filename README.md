@@ -270,6 +270,14 @@ brew bundle check --file=~/dotfiles/Brewfile --verbose
 
 > **Don't use `brew bundle dump`** to overwrite the Brewfile — it captures every transitive dependency and machine-specific noise. Maintain the Brewfile manually as the "what I want everywhere" list.
 
+### Per-host extras: `Brewfile.d/<host>.Brewfile`
+
+Packages one machine needs that the others shouldn't get (e.g. solaris's server role: `periphery`, `node_exporter`, `glances`) live in `Brewfile.d/<host>.Brewfile`, keyed on `hostname -s` lowercased. `dotfiles-sync` installs the host file automatically after the shared Brewfile when one exists. Check it the same way:
+
+```bash
+brew bundle check --file=~/dotfiles/Brewfile.d/$(hostname -s | tr 'A-Z' 'a-z').Brewfile
+```
+
 ---
 
 ## Devcontainer support
