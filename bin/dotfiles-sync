@@ -48,9 +48,16 @@ brew bundle --no-upgrade --file="$DOTFILES/Brewfile" >/dev/null
 
 log "re-stowing packages…"
 PACKAGES=(zsh p10k tmux git nvim lazygit atuin ollama)
+FAILED=()
 for pkg in "${PACKAGES[@]}"; do
   [[ -d "$DOTFILES/$pkg" ]] || continue
-  stow --no-folding -R -d "$DOTFILES" -t "$HOME" "$pkg"
+  stow --no-folding -R --ignore='\.DS_Store' -d "$DOTFILES" -t "$HOME" "$pkg" \
+    || FAILED+=("$pkg")
 done
+
+if (( ${#FAILED[@]} )); then
+  log "FAILED to stow: ${FAILED[*]} — fix conflicts above and re-run."
+  exit 1
+fi
 
 log "done."
