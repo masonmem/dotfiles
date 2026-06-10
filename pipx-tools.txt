@@ -1,0 +1,25 @@
+# Python CLI tools installed via pipx.
+#
+# Why pipx and not the Brewfile: Homebrew's python@3.14 is PEP 668
+# externally-managed, so plain `pip install` is blocked. pipx (declared in
+# the Brewfile) isolates each tool in its own venv; binaries land in
+# ~/.local/bin, already on PATH via ~/.zprofile.
+#
+# Reproduce on a fresh Mac — see README "Bootstrap a fresh Mac" step 3b:
+#   grep -v '^#' ~/dotfiles/pipx-tools.txt | grep . | xargs -n1 pipx install
+#
+# Entries (one bare package name per line; '#' lines are comments):
+#
+# unifi-mcp-server — local stdio UniFi MCP server for the CLI agents
+#   (Claude Code, Copilot CLI, opencode) via ~/.ai-config/bin/unifi-mcp-wrapper.sh.
+#   The Open WebUI path is a SEPARATE containerised mcpo stack
+#   (homelab solaris/unifi-mcp); this list is only the local-stdio install.
+unifi-mcp-server
+
+# py-natpmp — natpmp-client.py, consumed by the `pf` WireGuard NAT-PMP
+#   port-forward loop alias in zsh/.config/zsh/20-aliases.zsh.
+py-natpmp
+
+# Deliberately NOT manifested (ad-hoc dev tools on navi, no tracked consumer):
+#   poetry, pytest, transformers. Add here only if a tracked file starts
+#   depending on one of them.

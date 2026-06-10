@@ -31,6 +31,9 @@ git clone git@github.com:masonmem/ai-config.git   ~/.ai-config
 # 3. Install everything in the Brewfile (formulae + casks — pinned set)
 brew bundle --file=~/dotfiles/Brewfile
 
+# 3b. Install pipx-managed Python CLIs (not covered by brew bundle; see pipx-tools.txt)
+grep -v '^#' ~/dotfiles/pipx-tools.txt | grep . | xargs -n1 pipx install
+
 # 4. Install Rust toolchain (needed for the .zshenv cargo env)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 

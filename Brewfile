@@ -44,7 +44,7 @@ brew "node"                                # Default node — keeps /opt/homebre
                                            # so launchd / opencode MCP subprocesses / cron find
                                            # node without sourcing nvm. nvm still wins when active.
 brew "nvm"                                 # Node version manager (per-project pins)
-brew "pipx"                                # install Python CLI tools in isolation
+brew "pipx"                                # install Python CLI tools in isolation (tool list: pipx-tools.txt)
 brew "pnpm"                                # fast Node package manager
 brew "python@3.14"                         # Python
 brew "yarn"                                # Node package manager
