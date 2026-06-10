@@ -282,7 +282,6 @@ The `.zshrc` auto-sources `~/.config/zsh/*.zsh` in alphabetical order. Numbered 
 | `Brewfile`                            | Curated list of formulae + casks (shared across machines)                                          |
 | `bin/sync-all`                        | One-command pull of dotfiles + ai-config + brew bundle                                             |
 | `bin/dotfiles-sync`                   | Pull this repo + brew bundle + re-stow                                                             |
-| `bin/secrets-push`                    | Rsync `~/.ai-config/secrets/` to another Mac (chmod 600 enforced)                                  |
 | `bin/dexec`                           | Convenience helper for `docker exec`                                                               |
 | `scripts/devcontainer-tools.sh`       | Installs CLI tools inside Linux dev containers                                                     |
 | `~/.zshrc`                            | Shell entry point — loads oh-my-zsh + sources `~/.config/zsh/*.zsh`                                |
