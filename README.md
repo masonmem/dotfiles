@@ -182,6 +182,17 @@ Each subdirectory is a **package**. `stow <package>` creates symlinks from `~` i
 | `ollama/`  | Local Ollama tuning + LiteLLM gateway env, agent wiring (aider/opencode/goose) | **Opt-in.** Don't stow on work machines unless you've cleared local-LLM tooling with your employer. |
 | `ssh/`     | `.ssh/config`                                                            | ❌ Template only — copy + edit  |
 
+### Per-host package selection
+
+`dotfiles-sync` stows the packages listed in `~/.config/dotfiles/packages` (untracked; one per line, `#` comments). If the file doesn't exist it falls back to the full personal-Mac set (including `ollama`). Create it once per host:
+
+```bash
+mkdir -p ~/.config/dotfiles
+printf '%s\n' zsh p10k tmux git nvim lazygit atuin ollama > ~/.config/dotfiles/packages
+# work MacBook: same line WITHOUT ollama
+# hyperion:     printf '%s\n' zsh p10k git > ~/.config/dotfiles/packages
+```
+
 ---
 
 ## What's NOT stowed (and why)
