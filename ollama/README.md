@@ -49,7 +49,7 @@ routed aliases.
 |---|---|
 | `opencode` | TUI agent against the LiteLLM gateway. `Ctrl-M` switches model. Default: `auto` (local granite, escalates to cloud only on context overflow). |
 | `aider` | Diff-driven editor. Shell wrapper injects `OPENAI_API_KEY` per call. Default: `openai/local/gemma4-e4b-0x`. |
-| `goose` | MCP-heavy interactive agent. Shell wrapper injects `OPENAI_API_KEY=$GOOSE_LITELLM_KEY`. Default: `cloud/claude-sonnet-4.6-3x`. Config: `~/.config/goose/config.yaml` (stowed). |
+| `goose` | MCP-heavy interactive agent. Shell wrapper injects `OPENAI_API_KEY=$GOOSE_LITELLM_KEY`. Default: `local/granite4.1-8b-0x`. Config: `~/.config/goose/config.yaml` (stowed). |
 | `litellm-keys list` / `mint <tool> [--budget USD --duration 30d]` / `revoke <tool>` / `push` / `pull` | Manage per-tool LiteLLM virtual keys (file ↔ Keychain). |
 
 See `homelab/docs/llm-clients.md` for how the gateway, virtual keys,

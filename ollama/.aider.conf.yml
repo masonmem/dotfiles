@@ -11,18 +11,19 @@
 #
 # ── Architect mode ──────────────────────────────────────────────────────
 # aider's architect mode splits the work in two:
-#   architect  → reasons about the change, proposes a patch (sonnet)
+#   architect  → reasons about the change, proposes a patch
 #   editor     → mechanically applies the diff (cheap/fast local coder)
-# This pattern keeps the expensive-thinking turn small while the
-# repetitive diff-formatting turn runs free on local. Disable with
-# `--no-architect` for a single-model session.
+# This pattern keeps the heavy-thinking turn on the strongest local
+# reasoner while the repetitive diff-formatting turn runs on the local
+# coder. Disable with `--no-architect` for a single-model session.
 #
-# Default architect: cloud/claude-sonnet-4.6-3x — strong reasoning, prompt-cached.
-# Default editor:    local/qwen2.5-coder-7b-0x — free, fast, diff-friendly.
+# LOCAL-ONLY (cloud removed 2026-06-11).
+# Default architect: local/qwen3-14b-0x — strongest local reasoner.
+# Default editor:    local/qwen2.5-coder-7b-0x — fast, diff-friendly.
 # Weak model (commit msgs / repo summaries): local/qwen2.5-coder-7b-0x.
 
 architect: true
-model: openai/cloud/claude-sonnet-4.6-3x
+model: openai/local/qwen3-14b-0x
 editor-model: openai/local/qwen2.5-coder-7b-0x
 weak-model: openai/local/qwen2.5-coder-7b-0x
 edit-format: diff

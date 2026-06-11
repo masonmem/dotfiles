@@ -15,21 +15,24 @@
   //
   // Model ids mirror homelab/solaris/litellm/config.yaml. The id IS
   // the display name — no `name` override here — so opencode and Open
-  // WebUI show identical strings (e.g. `cloud/claude-sonnet-4.6-3x`). The
-  // `-Nx` suffix is the cost tier baked into the id; see
-  // homelab/docs/models.md § "Cost-tier suffix".
+  // WebUI show identical strings (e.g. `local/qwen3-14b-0x`). The
+  // `-0x` suffix is the (free/local) cost tier baked into the id; see
+  // homelab/docs/llm-platform.md § "Naming convention".
+  //
+  // LOCAL-ONLY: the gateway exposes only local Ollama models. Cloud
+  // providers were removed 2026-06-11 — do not add `cloud/*` entries.
   //
   // To add a model: add it to litellm/config.yaml first with the
-  // `-Nx` suffix, then add a matching entry below (no `name` field).
+  // `-0x` suffix, then add a matching entry below (no `name` field).
   //
   // `enabled_providers` is an allowlist — without it, opencode would
   // auto-detect every provider whose env var is set (OPENAI_API_KEY,
   // ANTHROPIC_API_KEY, …) and clutter the picker with hundreds of
   // models we don't host.
   //
-  // Default model: `auto` — LiteLLM's auto alias defaults to local
-  // granite and auto-escalates to cloud sonnet on context overflow.
-  // Switch to a pinned model via `/models` in the TUI.
+  // Default model: `auto` — LiteLLM's auto alias points at local
+  // granite (the fast tool-capable default). Switch to a pinned model
+  // via `/models` in the TUI.
   //
   // MCP servers (`mcp` block) extend opencode with tools. Conventions:
   //   - install via official npm packages where they exist
@@ -48,11 +51,6 @@
       "models": {
         "auto":                      { "tools": true },
         "smart":                     { "tools": true },
-        "cloud/claude-opus-4.7-5x":         { "tools": true },
-        "cloud/claude-opus-4.6-5x":         { "tools": true },
-        "cloud/claude-sonnet-4.6-3x":       { "tools": true },
-        "cloud/claude-haiku-4.5-1x":        { "tools": true },
-        "cloud/gemini-flash-2.5-1x":        { "tools": true },
         "local/granite4.1-8b-0x":    { "tools": true, "options": { "temperature": 0.2, "top_p": 0.9, "top_k": 40 } },
         "local/gemma4-e4b-0x":       { "tools": true, "options": { "temperature": 1.0, "top_p": 0.95, "top_k": 64, "reasoning_effort": "none" } },
         // qwen2.5-coder advertises `tools` capability but its native tool
