@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Self-contained Ollama service for solaris (Mac Mini LLM host).
+
+  Replaces the old three-piece setup (homebrew.mxcl.ollama `brew services`
+  job + com.user.ollama-env env-poker + com.user.ollama-host brew-restarter).
+  We no longer use the Homebrew `ollama` *formula*: its bottle ships only the
+  main binary with NO `llama-server` runner, so every model load fails with
+  "llama-server binary not found" (verified on 0.30.7, 2026-06-11). Instead we
+  run the official standalone build installed by `ollama/bin/install-ollama.sh`
+  into ~/.local/ollama (complete: llama-server + libggml/libllama + bundled
+  mlx_metal_v3/v4 MLX runners — no brew mlx-c dependency).
+
+  This single agent: sets all tuning env, gates startup on the external models
+  SSD (/Volumes/Helio) being mounted, runs `ollama serve` directly, and
+  KeepAlive-restarts it on crash. WatchPaths restarts it when the SSD mounts.
+
+  Install / reload:
+    ln -sf ~/dotfiles/ollama/launchagents/com.user.ollama.plist \
+           ~/Library/LaunchAgents/com.user.ollama.plist
+    launchctl unload ~/Library/LaunchAgents/com.user.ollama.plist 2>/dev/null
+    launchctl load -w ~/Library/LaunchAgents/com.user.ollama.plist
+
+  Force restart (e.g. after SSD remount):
+    launchctl kickstart -k gui/$(id -u)/com.user.ollama
+
+  OLLAMA_HOST=0.0.0.0:11434 binds all interfaces so Docker Desktop containers
+  (host.docker.internal), tailnet peers, and the local CLI all reach it.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.user.ollama</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>OLLAMA_MODELS</key>            <string>/Volumes/Helio/ollama/models</string>
+    <key>OLLAMA_HOST</key>             <string>0.0.0.0:11434</string>
+    <key>OLLAMA_FLASH_ATTENTION</key>  <string>1</string>
+    <key>OLLAMA_KV_CACHE_TYPE</key>    <string>q8_0</string>
+    <key>OLLAMA_CONTEXT_LENGTH</key>   <string>32768</string>
+    <key>OLLAMA_KEEP_ALIVE</key>       <string>30m</string>
+    <key>OLLAMA_MAX_LOADED_MODELS</key><string>1</string>
+    <key>OLLAMA_NUM_PARALLEL</key>     <string>1</string>
+  </dict>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>n=0; while [ ! -d "$OLLAMA_MODELS" ] &amp;&amp; [ $n -lt 120 ]; do sleep 5; n=$((n+1)); done; exec "$HOME/.local/ollama/ollama" serve</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>WatchPaths</key>
+  <array>
+    <string>/Volumes/Helio</string>
+  </array>
+
+  <key>StandardOutPath</key>
+  <string>/opt/homebrew/var/log/ollama.log</string>
+  <key>StandardErrorPath</key>
+  <string>/opt/homebrew/var/log/ollama.log</string>
+</dict>
+</plist>

@@ -67,7 +67,10 @@ brew "sops"                                # encrypted secrets for solaris stack
 brew "age"                                 # SOPS encryption backend (per-host + admin keys)
 
 # ── LLM / AI tooling ─────────────────────────────────────────────────────────
-brew "ollama"                              # local LLM runtime (server lives on solaris)
+# ollama: NOT installed via Homebrew — the formula bottle is broken (ships no
+# `llama-server` runner, every model load fails). Use the official standalone
+# build instead: `ollama/bin/install-ollama.sh` → ~/.local/ollama, managed by
+# the com.user.ollama LaunchAgent on solaris. See ollama/launchagents/README.md.
 brew "aider"                               # AI pair programming in the terminal
 brew "opencode"                            # terminal-native AI coding agent
 brew "block-goose-cli"                     # goose AI agent (block.xyz)
