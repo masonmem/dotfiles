@@ -1,4 +1,5 @@
-tap "jesseduffield/lazygit"
+tap "jesseduffield/lazygit", trusted: { formula: "lazygit" }
+tap "anomalyco/tap", trusted: { formula: "opencode" }
 
 # ── Core CLI tools ───────────────────────────────────────────────────────────
 brew "bat"                                 # cat with syntax highlighting
@@ -72,7 +73,7 @@ brew "age"                                 # SOPS encryption backend (per-host +
 # build instead: `ollama/bin/install-ollama.sh` → ~/.local/ollama, managed by
 # the com.user.ollama LaunchAgent on solaris. See ollama/launchagents/README.md.
 brew "aider"                               # AI pair programming in the terminal
-brew "opencode"                            # terminal-native AI coding agent
+brew "anomalyco/tap/opencode"              # terminal-native AI coding agent
 brew "block-goose-cli"                     # goose AI agent (block.xyz)
 brew "uv"                                  # Python pkg/runtime mgr; provides `uvx` for MCP servers
 
