@@ -2,25 +2,21 @@
 
 <!--
 Auto-loaded by opencode from ~/.config/opencode/AGENTS.md on every
-session, regardless of cwd. Keep terse — durable, non-project-specific
-hints only. Project-specific instructions belong in a repo-root
-AGENTS.md.
+session. Shared cross-tool instructions are injected from
+~/code/ai-sync/agents/general.md via the `instructions` key in
+opencode.jsonc, and shared skills load natively from ~/.agents/skills
+(the ai-sync per-skill link farm). Keep this file to opencode-only
+glue that the shared layers can't express.
 -->
 
-## Personal notes vault
+## Personal notes vault (opencode tool-name glue)
 
-- `~/notes` is the user's Obsidian vault (Mason's personal notes,
-  journal, inbox, projects). Same vault is mounted in Open WebUI as
-  the `notes` tool server, so behaviour should be symmetric across
-  surfaces.
-- When the user mentions "my notes", "the inbox", "what did I write
-  about X", or anything implying the personal vault, USE the `notes`
-  MCP tools (`notes_search_files`, `notes_read_text_file`,
-  `notes_list_directory`, etc.). Do NOT respond with "I don't have
-  access to your personal notes" — you do.
-- Latest-by-mtime: `notes_directory_tree` of `00-inbox/` and the dated
-  subfolders is usually the right starting point; fall back to
-  `notes_search_files` with a query when the user asks about topics.
-- Treat the vault as **read-only by default**. Only write under
-  `~/notes/00-inbox/agent-drafts/` (matches the OWUI airlock), and
-  only when the user explicitly asks you to save / draft something.
+- Vault conventions live in the `notes-vault` skill — load it whenever
+  the user mentions "my notes", "the inbox", or anything implying the
+  personal vault. In opencode the vault surface is the `notes` MCP
+  server (`notes_search_files`, `notes_read_text_file`,
+  `notes_list_directory`, `notes_directory_tree`, …) — USE those
+  tools; do not reply "I don't have access to your personal notes".
+- Hard rule that applies even if the skill isn't loaded: the vault is
+  **read-only** except `~/notes/00-inbox/agent-drafts/`, and writes
+  happen only when the user explicitly asks to save/draft something.

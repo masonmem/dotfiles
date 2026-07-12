@@ -39,6 +39,10 @@
   //   - secrets come via env vars exported from ~/.copilot/secrets/
   //   - filesystem is scoped to ~/code and ~/notes (drop a path to deny it)
   "$schema": "https://opencode.ai/config.json",
+  // Shared cross-tool instructions from the ai-sync brain (merged with
+  // AGENTS.md, not a replacement). Skills come in separately via the
+  // native ~/.agents/skills discovery.
+  "instructions": ["{env:HOME}/code/ai-sync/agents/general.md"],
   "enabled_providers": ["litellm"],
   "provider": {
     "litellm": {
