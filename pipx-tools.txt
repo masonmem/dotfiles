@@ -8,13 +8,19 @@
 # Reproduce on a fresh Mac — see README "Bootstrap a fresh Mac" step 3b:
 #   grep -v '^#' ~/dotfiles/pipx-tools.txt | grep . | xargs -n1 pipx install
 #
-# Entries (one bare package name per line; '#' lines are comments):
+# Entries (one bare package name, or a `git+https://…` spec, per line;
+# '#' lines are comments):
 #
 # unifi-mcp-server — local stdio UniFi MCP server for the CLI agents
 #   (Claude Code, Copilot CLI, opencode) via ~/.ai-config/bin/unifi-mcp-wrapper.sh.
 #   The Open WebUI path is a SEPARATE containerised mcpo stack
 #   (homelab solaris/unifi-mcp); this list is only the local-stdio install.
 unifi-mcp-server
+
+# ynab-mcp-server — local stdio YNAB (budget) MCP server for the CLI agents
+#   via ~/.ai-config/bin/ynab-mcp-wrapper.sh. Not published to PyPI, so it is
+#   installed straight from the upstream git repo.
+git+https://github.com/rgarcia/ynab-mcp-server
 
 # py-natpmp — natpmp-client.py, consumed by the `pf` WireGuard NAT-PMP
 #   port-forward loop alias in zsh/.config/zsh/20-aliases.zsh.
