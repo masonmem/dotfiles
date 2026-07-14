@@ -34,10 +34,9 @@
   // granite (the fast tool-capable default). Switch to a pinned model
   // via `/models` in the TUI.
   //
-  // MCP servers (`mcp` block) extend opencode with tools. Conventions:
-  //   - install via official npm packages where they exist
-  //   - secrets come via env vars exported from ~/.copilot/secrets/
-  //   - filesystem is scoped to ~/code and ~/notes (drop a path to deny it)
+  // MCP servers (`mcp` block) extend opencode only where its native file,
+  // shell, and web tools or an installed CLI do not provide the capability.
+  // Secrets come from the shared ~/.copilot/secrets/ surface.
   "$schema": "https://opencode.ai/config.json",
   // Shared cross-tool instructions from the ai-sync brain (merged with
   // AGENTS.md, not a replacement). Skills come in separately via the
@@ -75,41 +74,6 @@
     }
   },
   "mcp": {
-    "filesystem": {
-      "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{env:HOME}/code", "{env:HOME}/notes"],
-      "enabled": true
-    },
-    // Dedicated notes MCP mirroring OWUI's `notes` tool server
-    // (solaris/notes-mcp). Scoped only to ~/notes so the tool's
-    // NAME ("notes_*") makes it obvious to the model when the user
-    // says "search my notes" — without this, the model often refuses
-    // ("I don't have access to your notes") because the generic
-    // `filesystem_*` tools don't signal vault semantics. Read-only
-    // semantics are enforced by opencode's permission gate (no `write`
-    // approval for ~/notes), not by the MCP server itself.
-    "notes": {
-      "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{env:HOME}/notes"],
-      "enabled": true
-    },
-    "fetch": {
-      "type": "local",
-      "command": ["uvx", "mcp-server-fetch"],
-      "enabled": true
-    },
-    "github": {
-      // Deprecated upstream — @modelcontextprotocol/server-github is no
-      // longer maintained. The `gh` CLI is already authenticated and on
-      // PATH; opencode can call it via bash for the same surface
-      // (issues, PRs, repo queries). Re-enable with the new official
-      // `github/github-mcp-server` (Go binary) when a stable npm/brew
-      // distribution lands and we wire GITHUB_TOKEN.
-      "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
-      "environment": { "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}" },
-      "enabled": false
-    },
     // Persistent knowledge graph across opencode sessions. Stores
     // entities, relations, and observations to ~/.config/opencode/
     // memory.json by default. Lets the model remember "Mason prefers X"
@@ -117,22 +81,6 @@
     "memory": {
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
-      "enabled": true
-    },
-    // Date/time/timezone math. Tiny but fixes the "model thinks it's
-    // 2024" class of bug; useful any time the model needs to reason
-    // about "today", "in 3 days", or convert across zones.
-    "time": {
-      "type": "local",
-      "command": ["uvx", "mcp-server-time"],
-      "enabled": true
-    },
-    // Structured reasoning scratchpad. The model can call this to lay
-    // out and revise a multi-step plan before executing. Useful in long
-    // agent loops; ~free when not called.
-    "sequential-thinking": {
-      "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
       "enabled": true
     },
     // UniFi controller (UCG Ultra) via the local unifi-mcp-server pipx

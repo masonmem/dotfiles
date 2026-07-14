@@ -13,10 +13,9 @@ glue that the shared layers can't express.
 
 - Vault conventions live in the `notes-vault` skill — load it whenever
   the user mentions "my notes", "the inbox", or anything implying the
-  personal vault. In opencode the vault surface is the `notes` MCP
-  server (`notes_search_files`, `notes_read_text_file`,
-  `notes_list_directory`, `notes_directory_tree`, …) — USE those
-  tools; do not reply "I don't have access to your personal notes".
+  personal vault. In OpenCode, use native `glob`/`grep`/`read` tools or
+  `rg` through the shell against `~/notes`; do not reply "I don't have
+  access to your personal notes".
 - Hard rule that applies even if the skill isn't loaded: the vault is
   **read-only** except `~/notes/00-inbox/agent-drafts/`, and writes
   happen only when the user explicitly asks to save/draft something.
