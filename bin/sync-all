@@ -4,7 +4,7 @@
 #
 # Currently:
 #   * dotfiles-sync     ~/dotfiles    machine env (Brewfile, zsh, stow)
-#   * ai-config-sync    ~/.ai-config  AI brain (skills, instructions, MCP)
+#   * ai-config-sync    ~/code/ai-sync  AI brain (skills, instructions, MCP)
 #
 # Safe to run anywhere. Same command on every Mac, regardless of where
 # the change you're pulling originated. Idempotent — each child script
@@ -13,12 +13,12 @@
 # Usage:
 #   sync-all           # pull everything
 #   sync-all dotfiles  # just dotfiles
-#   sync-all ai-config # just ai-config
+#   sync-all ai-sync   # just ai-sync
 
 set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
-AI_CONFIG="${AI_CONFIG:-$HOME/.ai-config}"
+AI_SYNC_REPO="${AI_CONFIG:-$HOME/code/ai-sync}"
 TARGET="${1:-all}"
 
 run_dotfiles() {
@@ -30,16 +30,16 @@ run_dotfiles() {
 }
 
 run_ai_config() {
-  if [[ -x "$AI_CONFIG/bin/ai-config-sync" ]]; then
-    "$AI_CONFIG/bin/ai-config-sync"
+  if [[ -x "$AI_SYNC_REPO/bin/ai-config-sync" ]]; then
+    "$AI_SYNC_REPO/bin/ai-config-sync"
   else
-    echo "[sync-all] skip ai-config: $AI_CONFIG/bin/ai-config-sync not found"
+    echo "[sync-all] skip ai-sync: $AI_SYNC_REPO/bin/ai-config-sync not found"
   fi
 }
 
 case "$TARGET" in
   all)         run_dotfiles; echo; run_ai_config ;;
   dotfiles)    run_dotfiles ;;
-  ai-config)   run_ai_config ;;
-  *)           echo "usage: sync-all [all|dotfiles|ai-config]" >&2; exit 2 ;;
+  ai-sync|ai-config) run_ai_config ;;
+  *)           echo "usage: sync-all [all|dotfiles|ai-sync]" >&2; exit 2 ;;
 esac

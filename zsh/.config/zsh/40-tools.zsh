@@ -6,18 +6,21 @@
 # GitHub MCP duplicates that surface, so disable only that server for normal
 # sessions. Set COPILOT_ENABLE_GITHUB_MCP=1 for a one-off session that needs it.
 copilot() {
-  case "${1:-}" in
-    completion|help|login|mcp|plugin|update|version)
-      command copilot "$@"
-      ;;
-    *)
-      if [[ "${COPILOT_ENABLE_GITHUB_MCP:-0}" == 1 ]]; then
+  (
+    umask 077
+    case "${1:-}" in
+      completion|help|login|mcp|plugin|plugins|skill|update|version)
         command copilot "$@"
-      else
-        command copilot --disable-mcp-server github-mcp-server "$@"
-      fi
-      ;;
-  esac
+        ;;
+      *)
+        if [[ "${COPILOT_ENABLE_GITHUB_MCP:-0}" == 1 ]]; then
+          command copilot "$@"
+        else
+          command copilot --disable-mcp-server github-mcp-server "$@"
+        fi
+        ;;
+    esac
+  )
 }
 
 _zsh_cache="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"

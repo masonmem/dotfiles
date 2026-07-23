@@ -12,13 +12,13 @@ This repo is the source of truth for **every Mac I sign into** — laptop, mini,
 sync-all
 ```
 
-That pulls the latest, installs any new Homebrew packages added to the [Brewfile](Brewfile), re-stows shell config, and pulls the parallel AI-brain repo (`masonmem/ai-config`) so global skills / MCP / Claude-Code-and-Copilot-CLI instructions stay in sync. Idempotent and direction-agnostic — same command on every host, regardless of where the change originated.
+That pulls the latest, installs any new Homebrew packages added to the [Brewfile](Brewfile), re-stows shell config, and pulls the parallel AI-brain repo (`masonmem/ai-sync`) so global skills / MCP / agent instructions stay in sync. Idempotent and direction-agnostic — same command on every host, regardless of where the change originated.
 
-Secrets (`~/.ai-config/secrets/*`) are **not** in this repo (gitignored, plaintext, `chmod 600`). They cross-sync between hosts with `secrets-push <other-host>` — see [the secrets discussion in `masonmem/homelab` § Operator-workstation secrets](https://github.com/masonmem/homelab/blob/main/docs/security.md#operator-workstation-secrets--aiconfigsecrets-safe).
+Secrets (`~/code/ai-sync/secrets/*`) are **not** in dotfiles or Git (gitignored, `chmod 600`). Work-provider credentials belong in the approved credential store, not in either repository.
 
 ## Which machines get what
 
-| Host             | Stow packages                         | brew         | `~/.ai-config` | Secrets |
+| Host             | Stow packages                         | brew         | `~/code/ai-sync` | Secrets |
 | ---------------- | ------------------------------------- | ------------ | -------------- | ------- |
 | **navi** (laptop)     | everything (incl. `ollama`)      | Brewfile     | ✅ full         | ✅       |
 | **solaris** (mini)    | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/solaris.Brewfile` | ✅ full | ✅ |
@@ -38,7 +38,7 @@ Per-host package choice lives in `~/.config/dotfiles/packages` (see [Per-host pa
 
 # 2. Clone this repo and the AI-brain repo
 git clone git@github.com:masonmem/dotfiles.git    ~/dotfiles
-git clone git@github.com:masonmem/ai-config.git   ~/.ai-config
+git clone git@github.com:masonmem/ai-sync.git     ~/code/ai-sync
 
 # 3. Install everything in the Brewfile (formulae + casks — pinned set)
 brew bundle --file=~/dotfiles/Brewfile
@@ -65,17 +65,10 @@ printf '%s\n' zsh p10k tmux git nvim lazygit atuin > ~/.config/dotfiles/packages
 #   stow --no-folding ollama && echo ollama >> ~/.config/dotfiles/packages
 #   then see ollama/README.md and ollama/launchagents/README.md (launchd agents)
 
-# 8. Set up the AI-brain symlinks (Copilot CLI and/or Claude Code)
-# Copilot CLI:
-mkdir -p ~/.copilot
-ln -sfn ~/.ai-config/instructions.md          ~/.copilot/copilot-instructions.md
-ln -sfn ~/.ai-config/skills                   ~/.copilot/skills
-ln -sfn ~/.ai-config/bin                      ~/.copilot/bin
-ln -sfn ~/.ai-config/mcp.json                 ~/.copilot/mcp-config.json
-ln -sfn ~/.ai-config/secrets                  ~/.copilot/secrets
-ln -sfn ~/.ai-config/copilot/settings.json    ~/.copilot/settings.json
-# Claude Code (if installed):
-bash ~/.ai-config/bin/bootstrap-claude.sh
+# 8. Set up the AI-brain links and checks.
+mkdir -m 700 -p ~/.copilot
+~/code/ai-sync/install.sh
+# Work machine: ~/code/ai-sync/install.sh --work
 
 # 9. Per-Mac files (templates / examples — none of these are stowed)
 cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config       # then edit for this Mac's hosts
@@ -86,7 +79,7 @@ cp ~/dotfiles/zsh/.config/zsh/90-host.zsh.example \
    ~/.config/zsh/90-$(hostname -s).zsh
 
 # 10. Populate machine-local secrets (or sync from another Mac you trust)
-mkdir -p ~/.ai-config/secrets   # placeholder; populate per-tool as needed
+mkdir -p ~/code/ai-sync/secrets   # personal hosts only; populate as needed
 # From an already-set-up Mac: ssh into this one and run `secrets-push <this-mac>`
 ```
 
@@ -171,9 +164,9 @@ Stowed-config quirks on non-Macs are handled automatically by the dotfiles: `.zp
 ## Day-to-day sync
 
 ```bash
-sync-all              # pull dotfiles + ai-config; install new brew packages
+sync-all              # pull dotfiles + ai-sync; install new brew packages
 sync-all dotfiles     # only one if you want
-sync-all ai-config
+sync-all ai-sync
 ```
 
 Same command on every Mac. Bails on a dirty working tree in either repo (won't trample local edits).
@@ -280,12 +273,12 @@ The `.zshrc` auto-sources `~/.config/zsh/*.zsh` in alphabetical order. Numbered 
 | File                                  | Purpose                                                                                            |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `Brewfile`                            | Curated list of formulae + casks (shared across machines)                                          |
-| `bin/sync-all`                        | One-command pull of dotfiles + ai-config + brew bundle                                             |
+| `bin/sync-all`                        | One-command pull of dotfiles + ai-sync + brew bundle                                               |
 | `bin/dotfiles-sync`                   | Pull this repo + brew bundle + re-stow                                                             |
 | `bin/dexec`                           | Convenience helper for `docker exec`                                                               |
 | `scripts/devcontainer-tools.sh`       | Installs CLI tools inside Linux dev containers                                                     |
 | `~/.zshrc`                            | Shell entry point — loads oh-my-zsh + sources `~/.config/zsh/*.zsh`                                |
-| `~/.zshenv`                           | Every-shell PATH (~/bin, Entware, Container Station, Homebrew, ai-config/bin) + cargo env + `_ZO_DOCTOR` |
+| `~/.zshenv`                           | Every-shell PATH (~/bin, Entware, Container Station, Homebrew, ai-sync/bin) + cargo env + `_ZO_DOCTOR` |
 | `~/.zprofile`                         | Homebrew shellenv + pipx PATH (login shells)                                                       |
 | `~/.config/zsh/00-path.zsh`           | PATH deduplication                                                                                 |
 | `~/.config/zsh/05-devcontainer.zsh`   | Auto-installs tools on first container shell launch                                                |

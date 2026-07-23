@@ -4,9 +4,9 @@ export PATH="$HOME/dotfiles/bin:$PATH"
 # Add ~/bin (where stow links per-package scripts like ollama/bin/litellm-keys)
 [[ -d "$HOME/bin" ]] && export PATH="$HOME/bin:$PATH"
 
-# Add ~/.ai-config/bin (ai-sync CLI, MCP wrappers, statusline.sh).
-# Hosts without ~/.ai-config/ (hyperion / minimal Linux) skip the entry.
-[[ -d "$HOME/.ai-config/bin" ]] && export PATH="$HOME/.ai-config/bin:$PATH"
+# Add the personal AI configuration commands.
+# Hosts without ai-sync (hyperion / minimal Linux) skip the entry.
+[[ -d "$HOME/code/ai-sync/bin" ]] && export PATH="$HOME/code/ai-sync/bin:$PATH"
 
 # GitHub Copilot CLI (downloaded by `gh copilot`)
 export PATH="$HOME/.local/share/gh/copilot:$PATH"

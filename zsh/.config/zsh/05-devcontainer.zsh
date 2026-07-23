@@ -9,4 +9,19 @@ if [[ ! -f "$_dc_stamp" ]] && [[ -x "/opt/dotfiles-scripts/devcontainer-tools.sh
   TOOL_CACHE="/var/cache/devcontainer-tools" /opt/dotfiles-scripts/devcontainer-tools.sh &>/dev/null && touch "$_dc_stamp"
   echo "✓ Done"
 fi
-unset _dc_stamp
+
+# Apply only the portable/work-safe ai-sync layer when the same personal repo
+# has been cloned into this container. Never assume or install home-only skills.
+_ai_sync="$HOME/code/ai-sync"
+_ai_stamp="$HOME/.local/share/ai-sync/.container-installed"
+if [[ -x "$_ai_sync/install.sh" && ! -f "$_ai_stamp" ]]; then
+  echo "⏳ Installing portable AI configuration..."
+  mkdir -p "${_ai_stamp:h}"
+  "$_ai_sync/install.sh" --work --container && touch "$_ai_stamp"
+  echo "✓ Done"
+fi
+
+if [[ -x "/opt/dotfiles-scripts/configure-vscode-ai" ]]; then
+  /opt/dotfiles-scripts/configure-vscode-ai --container &>/dev/null || true
+fi
+unset _dc_stamp _ai_sync _ai_stamp
