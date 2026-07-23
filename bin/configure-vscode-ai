@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""Merge personal worktree exclusions into VS Code user-scope settings."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import sys
+
+
+POLICY = {
+    "files.exclude": {"**/.worktrees": True},
+    "files.watcherExclude": {"**/.worktrees/**": True},
+    "search.exclude": {"**/.worktrees/**": True},
+}
+
+
+def strip_jsonc(text: str) -> str:
+    output: list[str] = []
+    index = 0
+    in_string = False
+    escaped = False
+    while index < len(text):
+        char = text[index]
+        next_char = text[index + 1] if index + 1 < len(text) else ""
+        if in_string:
+            output.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            index += 1
+            continue
+        if char == '"':
+            in_string = True
+            output.append(char)
+            index += 1
+            continue
+        if char == "/" and next_char == "/":
+            index += 2
+            while index < len(text) and text[index] not in "\r\n":
+                index += 1
+            continue
+        if char == "/" and next_char == "*":
+            end = text.find("*/", index + 2)
+            if end < 0:
+                raise ValueError("unterminated JSONC block comment")
+            index = end + 2
+            continue
+        output.append(char)
+        index += 1
+    return re.sub(r",(\s*[}\]])", r"\1", "".join(output))
+
+
+def default_path(container: bool) -> Path:
+    home = Path.home()
+    if container:
+        candidates = (
+            home / ".vscode-server" / "data" / "Machine" / "settings.json",
+            home / ".vscode-remote" / "data" / "Machine" / "settings.json",
+        )
+        for path in candidates:
+            if path.exists():
+                return path
+        return candidates[0]
+    if sys.platform == "darwin":
+        return home / "Library" / "Application Support" / "Code" / "User" / "settings.json"
+    return home / ".config" / "Code" / "User" / "settings.json"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--container", action="store_true")
+    parser.add_argument("--settings", type=Path, help=argparse.SUPPRESS)
+    args = parser.parse_args()
+    path = args.settings or default_path(args.container)
+
+    if path.exists():
+        try:
+            settings = json.loads(strip_jsonc(path.read_text()))
+        except (json.JSONDecodeError, ValueError) as error:
+            raise SystemExit(f"refusing to rewrite invalid VS Code settings: {error}")
+    else:
+        settings = {}
+    if not isinstance(settings, dict):
+        raise SystemExit("refusing to rewrite non-object VS Code settings")
+
+    changed = False
+    for section, values in POLICY.items():
+        current = settings.setdefault(section, {})
+        if not isinstance(current, dict):
+            raise SystemExit(f"refusing to replace non-object setting: {section}")
+        for key, value in values.items():
+            if current.get(key) != value:
+                current[key] = value
+                changed = True
+    if not changed:
+        print(f"VS Code worktree exclusions already configured: {path}")
+        return 0
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.ai-sync-{os.getpid()}")
+    temporary.write_text(json.dumps(settings, indent=2) + "\n")
+    os.replace(temporary, path)
+    print(f"VS Code worktree exclusions merged: {path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
