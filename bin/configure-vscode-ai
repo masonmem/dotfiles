@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge personal worktree exclusions into VS Code user-scope settings."""
+"""Merge personal AI policy into VS Code user-scope settings."""
 
 from __future__ import annotations
 
@@ -15,6 +15,10 @@ POLICY = {
     "files.exclude": {"**/.worktrees": True},
     "files.watcherExclude": {"**/.worktrees/**": True},
     "search.exclude": {"**/.worktrees/**": True},
+}
+
+SCALAR_POLICY = {
+    "chat.useAgentSkills": True,
 }
 
 
@@ -91,6 +95,10 @@ def main() -> int:
         raise SystemExit("refusing to rewrite non-object VS Code settings")
 
     changed = False
+    for key, value in SCALAR_POLICY.items():
+        if settings.get(key) != value:
+            settings[key] = value
+            changed = True
     for section, values in POLICY.items():
         current = settings.setdefault(section, {})
         if not isinstance(current, dict):
@@ -100,14 +108,14 @@ def main() -> int:
                 current[key] = value
                 changed = True
     if not changed:
-        print(f"VS Code worktree exclusions already configured: {path}")
+        print(f"VS Code AI settings already configured: {path}")
         return 0
 
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.ai-sync-{os.getpid()}")
     temporary.write_text(json.dumps(settings, indent=2) + "\n")
     os.replace(temporary, path)
-    print(f"VS Code worktree exclusions merged: {path}")
+    print(f"VS Code AI settings merged: {path}")
     return 0
 
 
