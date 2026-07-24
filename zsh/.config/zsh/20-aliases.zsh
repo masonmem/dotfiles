@@ -17,7 +17,14 @@ if command -v bat >/dev/null 2>&1; then
   alias cat='bat --paging=auto'
 fi
 
-if command -v eza >/dev/null 2>&1; then
+if [[ -n "${DEVCONTAINER:-}" || -n "${REMOTE_CONTAINERS:-}" || -e /.dockerenv ]]; then
+  # A host-built or cached eza binary can be incompatible with a container's
+  # libc/CPU and has caused `ls` to segfault. Keep the native utility as the
+  # reliable boundary; eza remains available explicitly for diagnosis.
+  unalias ls ll la lt 2>/dev/null || true
+  alias ll='command ls -alh'
+  alias la='command ls -Ah'
+elif command -v eza >/dev/null 2>&1; then
   alias ls='eza --group-directories-first'
   alias ll='eza -la --git --icons --group-directories-first'
   alias la='eza -la --icons --group-directories-first'

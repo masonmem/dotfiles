@@ -304,7 +304,7 @@ The `.zshrc` auto-sources `~/.config/zsh/*.zsh` in alphabetical order. Numbered 
 
 **Devcontainer support:** `.zshrc` detects the `DEVCONTAINER=1` env var and adjusts plugins accordingly (skips macOS-only plugins). The `05-devcontainer.zsh` file bootstraps CLI tools on first shell open inside a container.
 
-**Tooling note:** every alias in `20-aliases.zsh` that depends on an optional binary (`bat`, `eza`, `nvim`, `lazygit`, `kubecolor`, `yt-dlp`) is gated with `command -v` so a host without the tool falls back to the underlying command (`cat`, `ls`, `vi`, etc.) instead of shadowing it with something missing. This makes the same config usable on minimal hosts (Linux dev containers, NAS shells with limited tooling) without per-host carve-outs.
+**Tooling note:** every alias in `20-aliases.zsh` that depends on an optional binary (`bat`, `eza`, `nvim`, `lazygit`, `kubecolor`, `yt-dlp`) is gated with `command -v` so a host without the tool falls back to the underlying command (`cat`, `ls`, `vi`, etc.) instead of shadowing it with something missing. Dev containers always keep native `ls` (with native `ll`/`la` helpers) because a cached or host-incompatible `eza` must not make basic directory listing crash. This makes the same config usable on minimal hosts (Linux dev containers, NAS shells with limited tooling) without per-host carve-outs.
 
 Key tooling:
 
@@ -352,7 +352,7 @@ brew bundle check --file=~/dotfiles/Brewfile.d/$(hostname -s | tr 'A-Z' 'a-z').B
 The shell config is designed to work inside Linux dev containers. The setup:
 
 1. **Mount host config into container** — `.zshrc`, `.oh-my-zsh`, `.p10k.zsh`, `~/.config/zsh/`, git config, nvim/lazygit config.
-2. **Auto-install CLI tools** — `05-devcontainer.zsh` runs `scripts/devcontainer-tools.sh` on first shell open (installs bat, eza, fd, rg, fzf, zoxide, atuin, lazygit, nvim, delta from pre-built Linux binaries).
+2. **Auto-install CLI tools** — `05-devcontainer.zsh` runs `scripts/devcontainer-tools.sh` on first shell open (installs bat, eza, fd, rg, fzf, zoxide, atuin, lazygit, nvim, delta from pre-built Linux binaries). `eza` remains explicitly callable, but `ls` stays native in containers.
 3. **Graceful degradation** — all tool init scripts use `command -v` guards; missing tools are silently skipped (same pattern as the alias guards).
 
 Mount these volumes in your `docker-compose.override.yml`:
