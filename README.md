@@ -20,7 +20,7 @@ Secrets (`~/code/ai-sync/secrets/*`) are **not** in dotfiles or Git (gitignored,
 
 | Host             | Stow packages                         | brew         | `~/code/ai-sync` | Secrets |
 | ---------------- | ------------------------------------- | ------------ | -------------- | ------- |
-| **navi** (laptop)     | everything (incl. `ollama`)      | Brewfile     | ✅ full         | ✅       |
+| **navi** (laptop)     | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/navi.Brewfile` | ✅ full | ✅ |
 | **solaris** (mini)    | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/solaris.Brewfile` | ✅ full | ✅ |
 | **hyperion** (QNAP)   | `zsh p10k git` via manual ln loop (no stow) | none — Entware `opkg` | ❌ none | sops age key only |
 | **work MacBook**      | base set, **no `ollama`**        | Brewfile     | subset — no personal secrets | ❌ |
@@ -332,7 +332,7 @@ brew bundle --file=~/dotfiles/Brewfile
 brew bundle cleanup --file=~/dotfiles/Brewfile
 
 # See what's in the Brewfile but NOT installed (missing):
-brew bundle check --file=~/dotfiles/Brewfile --verbose
+brew bundle check --no-upgrade --file=~/dotfiles/Brewfile --verbose
 ```
 
 > **Don't use `brew bundle dump`** to overwrite the Brewfile — it captures every transitive dependency and machine-specific noise. Maintain the Brewfile manually as the "what I want everywhere" list.
@@ -342,7 +342,7 @@ brew bundle check --file=~/dotfiles/Brewfile --verbose
 Packages one machine needs that the others shouldn't get (e.g. solaris's server role: `periphery`, `node_exporter`, `glances`) live in `Brewfile.d/<host>.Brewfile`, keyed on `hostname -s` lowercased. `dotfiles-sync` installs the host file automatically after the shared Brewfile when one exists. Check it the same way:
 
 ```bash
-brew bundle check --file=~/dotfiles/Brewfile.d/$(hostname -s | tr 'A-Z' 'a-z').Brewfile
+brew bundle check --no-upgrade --file=~/dotfiles/Brewfile.d/$(hostname -s | tr 'A-Z' 'a-z').Brewfile
 ```
 
 ---
@@ -414,6 +414,6 @@ ssh <other-mac> 'git -C ~/dotfiles rev-parse HEAD'
 git -C ~/dotfiles rev-parse HEAD
 
 # Same Brewfile state?
-brew bundle check --file=~/dotfiles/Brewfile
-ssh <other-mac> '/opt/homebrew/bin/brew bundle check --file=~/dotfiles/Brewfile'
+brew bundle check --no-upgrade --file=~/dotfiles/Brewfile
+ssh <other-mac> '/opt/homebrew/bin/brew bundle check --no-upgrade --file=~/dotfiles/Brewfile'
 ```
