@@ -10,6 +10,12 @@ export XDG_DATA_HOME="$HOME/.local/share"
 # bat theme (used by bat alias and fzf preview)
 export BAT_THEME="Catppuccin Macchiato"
 
+# GitHub Copilot CLI OpenTelemetry
+export COPILOT_OTEL_ENABLED="true"
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
+# WARNING: Captures prompts, responses, code, and tool inputs/outputs.
+export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT="true"
+
 # NVM directory (actual load is lazy in 70-nvm.zsh)
 export NVM_DIR="$HOME/.nvm"
 
