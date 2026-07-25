@@ -83,4 +83,3 @@ cask "copilot-cli"                         # GitHub Copilot CLI — part of the 
 cask "docker-desktop"
 cask "font-meslo-lg-nerd-font"             # p10k's recommended font — what the prompt glyphs assume
 cask "font-jetbrains-mono-nerd-font"       # editor font
-cask "handy"                               # local, offline speech-to-text

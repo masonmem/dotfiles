@@ -20,7 +20,7 @@ Secrets (`~/code/ai-sync/secrets/*`) are **not** in dotfiles or Git (gitignored,
 
 | Host             | Stow packages                         | brew         | `~/code/ai-sync` | Secrets |
 | ---------------- | ------------------------------------- | ------------ | -------------- | ------- |
-| **navi** (laptop)     | everything (incl. `ollama`)      | Brewfile     | ✅ full         | ✅       |
+| **navi** (laptop)     | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/navi.Brewfile` | ✅ full | ✅ |
 | **solaris** (mini)    | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/solaris.Brewfile` | ✅ full | ✅ |
 | **hyperion** (QNAP)   | `zsh p10k git` via manual ln loop (no stow) | none — Entware `opkg` | ❌ none | sops age key only |
 | **work MacBook**      | base set, **no `ollama`**        | Brewfile     | subset — no personal secrets | ❌ |
