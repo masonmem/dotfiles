@@ -52,9 +52,9 @@ fi
 brew_bundle() {
   local file="$1" label="$2"
   log "brew bundle ($label)…"
-  if ! brew bundle --no-upgrade --file="$file" >/dev/null 2>&1; then
+  if ! brew bundle --no-upgrade --file="$file"; then
     warn "brew bundle ($label) failed — continuing without it."
-    warn "  (re-run \`brew bundle --file=$file\` to see why; common on an"
+    warn "  (re-run \`brew bundle --no-upgrade --file=$file\`; common on an"
     warn "   unsupported macOS beta until Homebrew catches up.)"
   fi
 }
