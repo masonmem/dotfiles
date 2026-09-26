@@ -1,23 +1,15 @@
-# Environment variables
-export EDITOR="nvim"
+# Interactive environment. (PATH and XDG dirs live in ~/.zshenv.)
+
+# Editor: nvim when present, so `git commit` still works on hosts without it.
+if (( $+commands[nvim] )); then
+  export EDITOR="nvim"
+elif (( $+commands[vim] )); then
+  export EDITOR="vim"
+else
+  export EDITOR="vi"
+fi
 export VISUAL="$EDITOR"
 
-# XDG base directories
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_CACHE_HOME="$HOME/.cache"
-export XDG_DATA_HOME="$HOME/.local/share"
-
-# bat theme (used by bat alias and fzf preview)
-export BAT_THEME="Catppuccin Macchiato"
-
-# GitHub Copilot CLI OpenTelemetry
-export COPILOT_OTEL_ENABLED="true"
-export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
-# WARNING: Captures prompts, responses, code, and tool inputs/outputs.
-export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT="true"
-
-# NVM directory (actual load is lazy in 70-nvm.zsh)
-export NVM_DIR="$HOME/.nvm"
-
-# Less / pager
+export BAT_THEME="Catppuccin Macchiato"   # bat, fzf previews, and delta
 export LESS="-R --use-color"
+export NVM_DIR="$HOME/.nvm"               # nvm itself is lazy-loaded in 70-nvm.zsh

@@ -1,5 +1,9 @@
+# Brewfile — shared by EVERY Mac, including the work machine. Keep it to
+# general tooling. Personal-only software goes in a package Brewfile
+# (personal/Brewfile, ollama/Brewfile) and single-host software in
+# Brewfile.d/<host>.Brewfile; dotfiles-sync installs all that apply.
+
 tap "jesseduffield/lazygit", trusted: { formula: "lazygit" }
-tap "anomalyco/tap", trusted: { formula: "opencode" }
 
 # ── Core CLI tools ───────────────────────────────────────────────────────────
 brew "bat"                                 # cat with syntax highlighting
@@ -11,7 +15,7 @@ brew "fzf"                                 # fuzzy finder
 brew "htop"                                # interactive process viewer
 brew "jq"                                  # JSON processor
 brew "ripgrep"                             # modern grep replacement
-brew "tealdeer"                            # fast tldr client (aliased in 20-aliases.zsh)
+brew "tealdeer"                            # fast tldr client (`tldr`)
 brew "tree"                                # directory tree viewer
 brew "watch"                               # run command periodically
 brew "wget"                                # HTTP file retriever
@@ -37,6 +41,7 @@ brew "lazydocker"                          # terminal UI for docker (k9s-like)
 
 # ── Editors ──────────────────────────────────────────────────────────────────
 brew "neovim"                              # modern vim
+brew "tree-sitter-cli"                     # nvim-treesitter compiles parsers with it
 
 # ── Languages & runtimes ─────────────────────────────────────────────────────
 brew "go"                                  # Go programming language
@@ -45,7 +50,7 @@ brew "node"                                # Default node — keeps /opt/homebre
                                            # so launchd / opencode MCP subprocesses / cron find
                                            # node without sourcing nvm. nvm still wins when active.
 brew "nvm"                                 # Node version manager (per-project pins)
-brew "pipx"                                # install Python CLI tools in isolation (tool list: pipx-tools.txt)
+brew "pipx"                                # isolated Python CLIs (lists: <package>/pipx-tools.txt)
 brew "pnpm"                                # fast Node package manager
 brew "python@3.14"                         # Python
 brew "yarn"                                # Node package manager
@@ -56,25 +61,12 @@ brew "kubecolor"                           # colorized kubectl output
 brew "kubectx"                             # switch k8s contexts/namespaces
 brew "stern"                               # multi-pod log tailing
 
-# ── Media & networking ───────────────────────────────────────────────────────
-brew "ffmpeg"                              # video/audio processing
-brew "yt-dlp"                              # video downloader
+# ── Networking ───────────────────────────────────────────────────────────────
 brew "iperf3"                              # network bandwidth testing
 brew "qrencode"                            # QR code generator
 
-# ── Homelab GitOps (masonmem/homelab + Komodo) ───────────────────────────────
-brew "gitleaks"                            # secret-scanning, runs in homelab CI
-brew "sops"                                # encrypted secrets for solaris stacks
-brew "age"                                 # SOPS encryption backend (per-host + admin keys)
-
-# ── LLM / AI tooling ─────────────────────────────────────────────────────────
-# ollama: NOT installed via Homebrew — the formula bottle is broken (ships no
-# `llama-server` runner, every model load fails). Use the official standalone
-# build instead: `ollama/bin/install-ollama.sh` → ~/.local/ollama, managed by
-# the com.user.ollama LaunchAgent on solaris. See ollama/launchagents/README.md.
-brew "aider"                               # AI pair programming in the terminal
-brew "anomalyco/tap/opencode"              # terminal-native AI coding agent
-brew "block-goose-cli"                     # goose AI agent (block.xyz)
+# ── AI tooling ───────────────────────────────────────────────────────────────
+# The local-LLM agent stack (aider, opencode, goose) is in ollama/Brewfile.
 brew "uv"                                  # Python pkg/runtime mgr; provides `uvx` for MCP servers
 
 # ── Applications ─────────────────────────────────────────────────────────────

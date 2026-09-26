@@ -1,0 +1,27 @@
+# ~/.ssh/config — per-machine, NOT tracked (install.sh copies this template
+# once; edit the copy). ssh uses the FIRST value it finds for each option, so
+# specific hosts go above the `Host *` defaults at the bottom.
+
+# ── Hosts ───────────────────────────────────────────────────────────────────
+# Host myserver
+#   HostName 192.168.1.100
+#   User ubuntu
+#
+# Host prod-via-bastion
+#   HostName 10.0.0.50
+#   User ubuntu
+#   ProxyJump bastion
+
+# ── Defaults for every host ─────────────────────────────────────────────────
+Host *
+  # UseKeychain is macOS-only; without this, Linux OpenSSH rejects the file.
+  IgnoreUnknown UseKeychain
+  IdentityFile ~/.ssh/id_ed25519
+  AddKeysToAgent yes
+  UseKeychain yes
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+  # Reuse one connection for repeated ssh/scp/rsync (install.sh creates ~/.ssh/sockets).
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%C
+  ControlPersist 600

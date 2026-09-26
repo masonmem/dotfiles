@@ -5,8 +5,9 @@
 # OpenAI-compatible client, so we point it at LiteLLM and authenticate
 # with the per-tool virtual key minted by `litellm-keys mint goose`.
 #
-# The plaintext key lives at ~/.copilot/secrets/litellm-goose.txt and
-# is exported as GOOSE_API_KEY by the `16-llm-gateway.zsh` dotfile.
+# The key lives at ~/.copilot/secrets/litellm-goose.txt; 16-llm-gateway.zsh
+# loads it as GOOSE_LITELLM_KEY and the `goose` wrapper (61-goose-wrapper.zsh)
+# passes it to goose as OPENAI_API_KEY.
 #
 # ── Models ──────────────────────────────────────────────────────────────
 # LOCAL-ONLY (cloud removed 2026-06-11). Default: local/granite4.1-8b-0x —

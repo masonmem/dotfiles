@@ -1,0 +1,23 @@
+# personal/pipx-tools.txt — Python CLIs installed with pipx by dotfiles-sync on
+# hosts whose package list includes `personal`. Not linked into $HOME.
+#
+# Why pipx: Homebrew's Python is PEP 668 externally-managed, so plain
+# `pip install` is refused. pipx (in the shared Brewfile) gives each tool its
+# own venv; binaries land in ~/.local/bin (on PATH via ~/.zshenv).
+#
+# Format: `<name> [<pip spec>]`, one per line. <name> is what `pipx list`
+# reports — dotfiles-sync skips entries already installed. Pin git specs to a
+# commit: whatever is at that ref runs as you, holding your API tokens.
+# Upgrading an existing install stays manual (`pipx upgrade <name>`, or
+# `pipx install --force <spec>` after bumping a pin here).
+
+# Local stdio UniFi MCP server for the CLI agents, via ai-sync's
+# bin/unifi-mcp-wrapper.sh. (Open WebUI uses a separate containerised stack.)
+unifi-mcp-server
+
+# Local stdio YNAB MCP server for the CLI agents, via ai-sync's
+# bin/ynab-mcp-wrapper.sh. Not on PyPI; pinned to upstream HEAD as of 2026-09-26.
+ynab-mcp-server git+https://github.com/rgarcia/ynab-mcp-server@cd78abc89e941d7e2d5b28029886dfe3e3c215e2
+
+# natpmp-client.py for the `pf` WireGuard port-forward alias (50-personal.zsh).
+py-natpmp

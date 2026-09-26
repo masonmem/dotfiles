@@ -121,4 +121,4 @@ The right panel uses **delta** for rendering. You can scroll it with the mouse o
 
 ## Config location
 
-`~/.config/lazygit/config.yml` — managed via chezmoi. Reload: just reopen lazygit.
+`~/.config/lazygit/config.yml`, a symlink into `~/dotfiles/lazygit/` (stow). Reload: just reopen lazygit.

@@ -1,0 +1,22 @@
+# ~/.gitconfig.local — per-machine git settings. NOT tracked: install.sh
+# copies this template once; edit the copy. ~/.gitconfig includes it LAST, so
+# anything here overrides the shared config.
+
+# Left commented so git refuses to commit until you set it (rather than
+# committing as a placeholder).
+# [user]
+#     name = Your Name
+#     email = you@example.com
+
+# ── Work machine ────────────────────────────────────────────────────────────
+# Keep the work identity (and anything else employer-specific) here, not in
+# the repo. To use it only for work checkouts, scope it by directory:
+#
+# [includeIf "gitdir:~/work/"]
+#     path = ~/.gitconfig.work          # a second untracked file with [user] etc.
+
+# ── Host without delta (e.g. a minimal Linux box) ───────────────────────────
+# [core]
+#     pager = less -FRX
+# [interactive]
+#     diffFilter = cat

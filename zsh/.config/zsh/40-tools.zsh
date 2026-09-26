@@ -1,10 +1,8 @@
-# Tool integrations
-# Init scripts are cached to files — avoids subprocess spawning on every shell start.
-# Cache auto-regenerates if the binary is newer than the cache.
+# Tool integrations.
 
-# GitHub work is handled by the authenticated `gh` CLI. Copilot's built-in
-# GitHub MCP duplicates that surface, so disable only that server for normal
-# sessions. Set COPILOT_ENABLE_GITHUB_MCP=1 for a one-off session that needs it.
+# GitHub work goes through the authenticated `gh` CLI, so Copilot's built-in
+# GitHub MCP server is a duplicate; disable it for normal sessions. Set
+# COPILOT_ENABLE_GITHUB_MCP=1 for a one-off session that needs it.
 copilot() {
   (
     umask 077
@@ -23,35 +21,35 @@ copilot() {
   )
 }
 
+# fzf / atuin / zoxide print init scripts; cache them instead of spawning the
+# tool on every shell start. The cache is rebuilt when the binary is newer,
+# and discarded if generation fails (e.g. an fzf too old for --zsh).
 _zsh_cache="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 mkdir -p "$_zsh_cache"
+_cached_init() {   # <tool> <init command...>
+  local cache="$_zsh_cache/$1-init.zsh"
+  if [[ ! -s "$cache" || "$commands[$1]" -nt "$cache" ]]; then
+    "${@:2}" >| "$cache" 2>/dev/null || { rm -f "$cache"; return 1; }
+  fi
+  source "$cache"
+}
 
-# fzf — Ctrl-T (file picker) and Alt-C (dir picker); Ctrl-R set here but overridden by atuin
-if command -v fzf >/dev/null 2>&1; then
-  _fzf_cache="$_zsh_cache/fzf-init.zsh"
-  [[ -f "$_fzf_cache" && "$_fzf_cache" -nt "$(command -v fzf)" ]] || fzf --zsh >| "$_fzf_cache"
-  source "$_fzf_cache"
+# fzf — Ctrl-T (file picker) and Alt-C (dir picker). Its Ctrl-R is replaced by atuin below.
+if (( $+commands[fzf] )); then
+  _cached_init fzf fzf --zsh
   export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --info=inline --color=bg+:#363a4f,bg:#24273a,spinner:#f4dbd6,hl:#ed8796 --color=fg:#cad3f5,header:#ed8796,info:#c6a0f6,pointer:#f4dbd6 --color=marker:#b7bdf8,fg+:#cad3f5,prompt:#c6a0f6,hl+:#ed8796 --color=selected-bg:#494d64,border:#363a4f,label:#cad3f5'
-  # Dirs first, then files — mirrors Finder's "folders on top" behavior
+  # Dirs first, then files — mirrors Finder's "folders on top".
   export FZF_DEFAULT_COMMAND='{ fd --type d --color=never; fd --type f --color=never; } 2>/dev/null'
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=plain {} 2>/dev/null | head -100'"
-  export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -50'"
+  export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} 2>/dev/null | head -50'"
 fi
 
-# atuin — enhanced history search; takes over Ctrl-R
-if command -v atuin >/dev/null 2>&1; then
-  _atuin_cache="$_zsh_cache/atuin-init.zsh"
-  [[ -f "$_atuin_cache" && "$_atuin_cache" -nt "$(command -v atuin)" ]] || atuin init zsh >| "$_atuin_cache"
-  source "$_atuin_cache"
-fi
+# atuin — history search on Ctrl-R and ↑.
+(( $+commands[atuin] )) && _cached_init atuin atuin init zsh
 
-# zoxide — smart cd replacement (--cmd cd makes `cd` use zoxide transparently)
-# `cd -` and normal path navigation work as expected; `zi` opens interactive picker
-if command -v zoxide >/dev/null 2>&1; then
-  _zoxide_cache="$_zsh_cache/zoxide-init.zsh"
-  [[ -f "$_zoxide_cache" && "$_zoxide_cache" -nt "$(command -v zoxide)" ]] || zoxide init zsh --cmd cd >| "$_zoxide_cache"
-  source "$_zoxide_cache"
-fi
+# zoxide — `cd` learns directories (`cd proj` jumps); `zi` is the interactive picker.
+(( $+commands[zoxide] )) && _cached_init zoxide zoxide init zsh --cmd cd
 
-unset _zsh_cache _fzf_cache _atuin_cache _zoxide_cache
+unfunction _cached_init
+unset _zsh_cache

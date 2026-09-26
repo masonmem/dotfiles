@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# tests/run — every check for this repo. CI runs it on each push; run it
+# locally before pushing, since `sync-all` spreads a mistake to every machine.
+#
+#   tests/run            all checks
+#   tests/run --offline  skip test-shell-startup.sh (it clones from GitHub)
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+failed=()
+step() {   # <name> <command...>
+  printf '\n\033[1m▶ %s\033[0m\n' "$1"
+  if "${@:2}"; then echo "✓ $1"; else echo "✗ $1"; failed+=("$1"); fi
+}
+
+bash_scripts=(install.sh bin/bootstrap-shell bin/dexec bin/dotfiles-sync bin/qnap-gitstatus-fix bin/sync-all
+              ollama/bin/litellm-keys ollama/bin/install-ollama.sh scripts/devcontainer-tools.sh tests/run tests/*.sh)
+zsh_files=(zsh/.zshenv zsh/.zprofile zsh/.zshrc zsh/.config/zsh/*.zsh */.config/zsh/*.zsh templates/zsh-host.zsh tests/*.zsh)
+
+zsh_syntax() { local f; for f in "$@"; do zsh -n "$f" || return 1; done; }
+
+step "shellcheck"         shellcheck "${bash_scripts[@]}"
+step "zsh syntax"         zsh_syntax "${zsh_files[@]}"
+step "configure-vscode-ai" python3 -m unittest -q tests/test-configure-vscode-ai.py
+step "brew output visible" python3 -m unittest -q tests/test-dotfiles-sync.py
+step "zsh alias policy"   zsh tests/test-zsh-aliases.zsh
+step "dotfiles-sync"      tests/test-dotfiles-sync.sh
+[[ "${1:-}" == --offline ]] || step "shell startup" tests/test-shell-startup.sh
+
+echo
+if (( ${#failed[@]} )); then echo "FAILED: ${failed[*]}"; exit 1; fi
+echo "All checks passed."

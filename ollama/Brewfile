@@ -1,0 +1,13 @@
+# ollama/Brewfile — the local-LLM agent stack whose configs this package links.
+# Installed by dotfiles-sync on hosts whose package list includes `ollama`.
+# Not linked into $HOME.
+#
+# Ollama itself is NOT installed via Homebrew — the formula bottle ships no
+# `llama-server` runner, so every model load fails. solaris runs the official
+# build instead: bin/install-ollama.sh + launchagents/com.user.ollama.plist.
+
+tap "anomalyco/tap", trusted: { formula: "opencode" }
+
+brew "aider"                               # diff-driven pair programming (60-aider-wrapper.zsh)
+brew "anomalyco/tap/opencode"              # terminal AI coding agent (.config/opencode)
+brew "block-goose-cli"                     # goose agent (61-goose-wrapper.zsh, .config/goose)

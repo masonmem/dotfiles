@@ -1,0 +1,5 @@
+# Package metadata that dotfiles-sync reads; not linked into $HOME.
+# (This file replaces stow's built-in ignore list for the package.)
+\.DS_Store
+^/Brewfile
+^/pipx-tools\.txt

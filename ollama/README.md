@@ -1,37 +1,32 @@
 # ollama (dotfiles package)
 
-Opt-in zsh configuration for using the LiteLLM gateway on solaris from
-this Mac:
+The local-LLM agent stack for **personal** machines. Opt-in: it is in the
+`personal` profile of `install.sh` and never on the work machine (don't add it
+there unless your employer has cleared local-LLM tooling).
 
-- Local Ollama tuning env vars for Apple Silicon (`15-ollama.zsh`) — the
-  Modelfile-baked sampler/`num_ctx` lives **server-side** on solaris
-  (in `homelab/solaris/ollama/modelfiles/`); these env vars matter only
-  if you also `brew install ollama` on this Mac.
-- LiteLLM gateway env: loads per-tool virtual keys into env vars; sets
-  `OPENAI_BASE_URL`/`OPENAI_API_KEY` for ad-hoc OpenAI-SDK use
-  (`16-llm-gateway.zsh`).
-- `aider` and `goose` wrappers that inject `OPENAI_API_KEY=$<TOOL>_LITELLM_KEY`
-  per call (their YAML doesn't expand env vars).
-- `litellm-keys` CLI: list / push / pull / mint / revoke per-tool LiteLLM
-  virtual keys; bridges file cache and macOS Keychain (`bin/litellm-keys`).
+What it links into `$HOME`:
 
-This package is **not** stowed automatically. Personal machines opt in:
+| File | Purpose |
+|---|---|
+| `.config/zsh/16-llm-gateway.zsh` | Sets `LITELLM_BASE_URL`; loads per-tool LiteLLM virtual keys into `<TOOL>_LITELLM_KEY` (file first, then macOS Keychain). |
+| `.config/zsh/60-aider-wrapper.zsh`, `61-goose-wrapper.zsh` | `aider` / `goose` wrappers that pass the tool's key as `OPENAI_API_KEY` to that process only. |
+| `.config/opencode/` | opencode config (reads its key via `{file:…}`) + opencode-only agent notes. |
+| `.config/goose/config.yaml`, `.aider.conf.yml` | goose and aider configs. |
+| `bin/litellm-keys` → `~/bin` | list / push / pull / mint / revoke per-tool virtual keys (file ↔ Keychain). |
 
-```bash
-stow --no-folding ollama
-```
+What it does **not** link (see `.stow-local-ignore`):
 
-Do **not** stow this on work machines unless you've cleared local-LLM
-use with your employer.
+- `Brewfile` — aider, opencode, goose. `dotfiles-sync` installs it on hosts
+  that enable this package.
+- `bin/install-ollama.sh`, `launchagents/` — the Ollama server itself, used on
+  **solaris** only; see [launchagents/README.md](launchagents/README.md).
 
-## Where the models actually live
+## Where the models live
 
-The Ollama daemon + every `local/*-0x` Modelfile + LiteLLM run on
-**solaris** (Mac Mini). This Mac talks to them over the tailnet via
-`https://llm.hyperionx.dev/v1`. You don't need Ollama installed locally
-unless you want a fallback when solaris is unreachable.
-
-To see what's exposed:
+Ollama, the Modelfiles, and LiteLLM run on **solaris**; other Macs reach them
+over the tailnet at `https://llm.hyperionx.dev/v1`. The model roster and naming
+convention are in `homelab/docs/models.md`; the gateway / virtual-key plumbing
+is in `homelab/docs/llm-clients.md`.
 
 ```sh
 curl -sS https://llm.hyperionx.dev/v1/models \
@@ -39,55 +34,25 @@ curl -sS https://llm.hyperionx.dev/v1/models \
   | jq -r '.data[].id' | sort
 ```
 
-See `homelab/docs/models.md` for the model roster, naming convention
-(`<scope>/<short>-<version>-<Nx>`), cost tiers, and the `auto` / `smart`
-routed aliases.
-
 ## Daily use
 
 | Command | Behavior |
 |---|---|
-| `opencode` | TUI agent against the LiteLLM gateway. `Ctrl-M` switches model. Default: `auto` (local granite, escalates to cloud only on context overflow). |
-| `aider` | Diff-driven editor. Shell wrapper injects `OPENAI_API_KEY` per call. Default: `openai/local/gemma4-e4b-0x`. |
-| `goose` | MCP-heavy interactive agent. Shell wrapper injects `OPENAI_API_KEY=$GOOSE_LITELLM_KEY`. Default: `local/granite4.1-8b-0x`. Config: `~/.config/goose/config.yaml` (stowed). |
-| `litellm-keys list` / `mint <tool> [--budget USD --duration 30d]` / `revoke <tool>` / `push` / `pull` | Manage per-tool LiteLLM virtual keys (file ↔ Keychain). |
+| `opencode` | TUI agent on the gateway. Default model `auto`; switch with `/models`. |
+| `aider` | Architect mode: `local/qwen3-14b-0x` plans, `local/qwen2.5-coder-7b-0x` edits (`.aider.conf.yml`). |
+| `goose` | MCP-heavy agent. Default `local/granite4.1-8b-0x`; override with `GOOSE_MODEL=…`. |
+| `litellm-keys list` · `pull` · `push` · `mint <tool> [--budget USD --duration 30d]` · `revoke <tool>` | Manage per-tool keys. On a new Mac: `litellm-keys pull`. |
 
-See `homelab/docs/llm-clients.md` for how the gateway, virtual keys,
-and BYOK plumbing fit together end-to-end.
+## Tool calling on local models
 
-## Tool calling on local models — the short version
+Verified 2026-05-26 against the gateway (`ollama_chat/` prefix):
 
-Verified 2026-05-26 against the gateway with `ollama_chat/` prefix:
+- **Agent loops:** `local/granite4.1-8b-0x` (default), `local/qwen3-14b-0x`,
+  `local/qwen3-abliterated-8b-0x`, `local/gemma4-e4b-0x`.
+- **Chat only (no tools capability):** `local/deepseek-r1-14b-0x`,
+  `local/llama3.2-vision-11b-0x`, `local/dolphin3-8b-0x` — sending tools just
+  makes them emit raw JSON.
+- **Completion, not agent loops:** `local/qwen2.5-coder-7b-0x` — advertises
+  tools but emits raw JSON.
 
-- **Use for agentic loops:** `local/granite4.1-8b-0x` (default),
-  `local/qwen3-14b-0x` (reasoning + tools), `local/qwen3-abliterated-8b-0x`,
-  `local/gemma4-e4b-0x` (multimodal + 256K ctx).
-- **Chat only (no tools):** `local/deepseek-r1-14b-0x`,
-  `local/llama3.2-vision-11b-0x`, `local/dolphin3-8b-0x` —
-  these lack the `tools` capability per `ollama show`; sending tools
-  embeds the schema as prompt text and the model emits raw JSON.
-- **Code completion, not agent loops:** `local/qwen2.5-coder-7b-0x` —
-  advertises `tools` but its template emits raw JSON even at native
-  `/api/chat`. Marked `tools:false` in `opencode.jsonc` for safety.
-
-`opencode.jsonc` encodes these flags; the homelab-helper skill
-(rule 16) gates `tools:true` on `ollama show` capability before
-toggling.
-
-## Companion alternatives (configs stowed; install binaries via Homebrew)
-
-```bash
-brew install aider                       # diff-based pair programming
-brew install opencode                    # Claude-Code-style TUI agent
-brew install block-goose-cli             # MCP-heavy general agent
-```
-
-After binaries are installed, `stow --no-folding ollama` from
-`~/dotfiles` (re-)creates symlinks for the opencode, aider, and goose
-configs.
-
-## Unstow
-
-```bash
-stow -D ollama
-```
+`opencode.jsonc` encodes these as `tools: true/false`.

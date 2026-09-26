@@ -1,27 +1,28 @@
-# Devcontainer bootstrap — auto-install CLI tools on first shell open.
-# Only runs when DEVCONTAINER=1 and the stamp file is missing.
-# Tools are cached in a named volume for fast reinstalls.
-[[ -z "${DEVCONTAINER}" ]] && return
+# Dev containers (DEVCONTAINER=1): install the CLI tools once per container
+# and apply the work-safe AI config layer. Expects the host's ~/dotfiles to be
+# mounted at ~/dotfiles — see README § Dev containers.
+[[ -z "${DEVCONTAINER:-}" ]] && return
 
 _dc_stamp="/usr/local/share/.devcontainer-tools-installed"
-if [[ ! -f "$_dc_stamp" ]] && [[ -x "/opt/dotfiles-scripts/devcontainer-tools.sh" ]]; then
-  echo "⏳ Installing shell tools (first run)..."
-  TOOL_CACHE="/var/cache/devcontainer-tools" /opt/dotfiles-scripts/devcontainer-tools.sh &>/dev/null && touch "$_dc_stamp"
-  echo "✓ Done"
+if [[ ! -f "$_dc_stamp" && -x "$HOME/dotfiles/scripts/devcontainer-tools.sh" ]]; then
+  print "⏳ Installing shell tools (first run)..."
+  if TOOL_CACHE="/var/cache/devcontainer-tools" "$HOME/dotfiles/scripts/devcontainer-tools.sh" &>/dev/null; then
+    touch "$_dc_stamp" && print "✓ Done"
+  else
+    print -u2 "✗ Some tools failed to install; re-run $HOME/dotfiles/scripts/devcontainer-tools.sh to see why."
+  fi
 fi
 
-# Apply only the portable/work-safe ai-sync layer when the same personal repo
-# has been cloned into this container. Never assume or install home-only skills.
-_ai_sync="$HOME/code/ai-sync"
+# Apply only the portable/work-safe ai-sync layer, and only when the repo has
+# been cloned into this container. Never install home-only skills here.
+_ai_sync="${AI_CONFIG:-$HOME/code/ai-sync}"
 _ai_stamp="$HOME/.local/share/ai-sync/.container-installed"
 if [[ -x "$_ai_sync/install.sh" && ! -f "$_ai_stamp" ]]; then
-  echo "⏳ Installing portable AI configuration..."
+  print "⏳ Installing portable AI configuration..."
   mkdir -p "${_ai_stamp:h}"
-  "$_ai_sync/install.sh" --work --container && touch "$_ai_stamp"
-  echo "✓ Done"
+  "$_ai_sync/install.sh" --work --container && touch "$_ai_stamp" && print "✓ Done"
 fi
 
-if [[ -x "/opt/dotfiles-scripts/configure-vscode-ai" ]]; then
-  /opt/dotfiles-scripts/configure-vscode-ai --container &>/dev/null || true
-fi
+[[ -x "$HOME/dotfiles/bin/configure-vscode-ai" ]] \
+  && "$HOME/dotfiles/bin/configure-vscode-ai" --container &>/dev/null
 unset _dc_stamp _ai_sync _ai_stamp

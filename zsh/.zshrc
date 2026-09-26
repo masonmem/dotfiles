@@ -1,70 +1,48 @@
-# Suppress the instant-prompt warning fired when compinit prints noise
-# (e.g. `_brew_services: no such file or directory` during a brew tap
-# refresh race). It's harmless, self-heals on next `brew update`, and the
-# warning is louder than the underlying issue. Set before sourcing the
-# instant-prompt block so the option is in effect on this startup too.
-typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+# ~/.zshrc — interactive shells. A thin loader: oh-my-zsh + powerlevel10k,
+# then every ~/.config/zsh/*.zsh in name order (90-<host>.zsh last).
 
-# Optional per-host overrides loaded BEFORE oh-my-zsh + powerlevel10k init.
-# Use for things that must be set early (POWERLEVEL9K_* vars in particular).
-# Untracked, empty by default. Example: hosts whose libc is too old for the
-# bundled gitstatusd can set `POWERLEVEL9K_DISABLE_GITSTATUS=true` here.
+# Optional, untracked per-host overrides that must run BEFORE oh-my-zsh and
+# p10k initialise — e.g. POWERLEVEL9K_DISABLE_GITSTATUS=true on a host whose
+# libc is too old for gitstatusd, or ZSH_THEME="" to skip p10k entirely.
 [[ -r "$HOME/.zshrc.early.local" ]] && source "$HOME/.zshrc.early.local"
 
-# Silence transient brew-race "no such file or directory" warnings from
-# compinit. /opt/homebrew/share/zsh/site-functions/_brew_services (and
-# friends) briefly vanish during `brew upgrade`'s atomic symlink swap;
-# if compinit walks fpath in that window it prints `compinit:527: no
-# such file or directory`. The file is back milliseconds later — next
-# shell start is clean. Wrap compinit so only that specific class of
-# error is dropped; all other compinit warnings still surface.
-# `autoload -Uz +X` loads the function body without executing it, so we
-# can clone it into a renamed copy before replacing the original.
+# compinit briefly prints "no such file or directory" if a shell starts while
+# `brew upgrade` is swapping /opt/homebrew/share/zsh/site-functions symlinks.
+# It self-heals on the next shell; drop only that message, keep other errors.
 autoload -Uz +X compinit
 functions[_orig_compinit]=$functions[compinit]
 compinit() {
   _orig_compinit "$@" 2> >(grep -v 'no such file or directory' >&2)
 }
 
-# Enable Powerlevel10k instant prompt. Must stay near the top.
-# Initialization code requiring console input must go above this block.
+# Powerlevel10k instant prompt. Must stay near the top; anything that may need
+# console input goes above this block.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# ── Completions fpath (before oh-my-zsh, which calls compinit) ─────────────
+# ── Completion search path (must be set before oh-my-zsh runs compinit) ─────
 typeset -U fpath
 fpath=(
-  "$HOME/.config/zsh/completions"            # cached completions (e.g. kubectl)
+  "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/completions"   # generated (kubectl; see 30-completions.zsh)
+  /opt/homebrew/share/zsh/site-functions
   $fpath
 )
-# Homebrew-managed completions (Mac only)
-[[ -d /opt/homebrew/share/zsh/site-functions ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+fpath=($^fpath(N-/))
 
 # ── oh-my-zsh ───────────────────────────────────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="powerlevel10k/powerlevel10k"
-
-# Plugins universal on every host; the `macos` plugin only loads on Darwin
-# (so the same .zshrc works on Linux/QNAP without errors). DEVCONTAINER=1
-# also skips macos to support that case.
-plugins=(
-  git
-  kube-ps1
-  vscode
-  zsh-autosuggestions
-  zsh-syntax-highlighting
-)
-if [[ "$OSTYPE" == darwin* && -z "${DEVCONTAINER}" ]]; then
-  plugins+=(macos)
-fi
-
+ZSH_THEME="${ZSH_THEME-powerlevel10k/powerlevel10k}"   # ~/.zshrc.early.local may override
+plugins=(git vscode zsh-autosuggestions zsh-syntax-highlighting)
+[[ "$OSTYPE" == darwin* ]] && plugins+=(macos)
 source "$ZSH/oh-my-zsh.sh"
 
 # ── Modular config ──────────────────────────────────────────────────────────
-for f in "$HOME/.config/zsh"/*.zsh(N); do
+# (N-.) = no error if empty; skip anything that isn't (a link to) a regular file.
+for f in "$HOME/.config/zsh"/*.zsh(N-.); do
   source "$f"
 done
+unset f
 
 # ── Prompt ──────────────────────────────────────────────────────────────────
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+[[ "$ZSH_THEME" == powerlevel10k/* && -r ~/.p10k.zsh ]] && source ~/.p10k.zsh

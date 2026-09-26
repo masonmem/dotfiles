@@ -1,0 +1,11 @@
+# personal/Brewfile — installed by dotfiles-sync on hosts whose package list
+# includes `personal` (never on the work machine). Not linked into $HOME.
+
+# ── Homelab GitOps (masonmem/homelab + Komodo) ───────────────────────────────
+brew "gitleaks"                            # secret scanning, runs in homelab CI
+brew "sops"                                # encrypted secrets for solaris stacks
+brew "age"                                 # SOPS encryption backend
+
+# ── Media ────────────────────────────────────────────────────────────────────
+brew "yt-dlp"                              # video downloader (aliases in 50-personal.zsh)
+brew "ffmpeg"                              # yt-dlp remuxing; general A/V work

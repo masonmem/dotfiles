@@ -1,373 +1,225 @@
 # dotfiles
 
-macOS dev environment. Apple Silicon, zsh, Homebrew. Managed with [GNU Stow](https://www.gnu.org/software/stow/).
+One repo for every machine I use: macOS on Apple Silicon (zsh + Homebrew), plus
+a QNAP NAS and Linux dev containers. Configs are symlinked into `$HOME` with
+[GNU Stow](https://www.gnu.org/software/stow/).
 
-## Intent
+- **Same everywhere:** shell, prompt, aliases, tmux, git, Neovim, lazygit, atuin,
+  and a shared set of CLI tools. SSH into any box and it feels like the laptop.
+- **Personal stays personal:** personal-only software and config live in opt-in
+  packages that are never linked or installed on the work machine.
+- **One command to converge:** change something on any machine, commit, push;
+  every other machine picks it up with `sync-all`.
 
-This repo is the source of truth for **every Mac I sign into** — laptop, mini, work machine, whatever. The promise: the same `~/.zshrc`, the same `Brewfile`, the same agent stack (opencode + aider + goose + Claude Code + Copilot CLI), the same aliases on each one. So SSH-ing into any tailnet Mac from a phone (Termius/Blink) drops me into a TTY that feels identical to the laptop I just left.
-
-**Bidirectional flow.** Edit on any Mac → commit → push. On any other Mac, run one command:
-
-```bash
-sync-all
-```
-
-That pulls the latest, installs any new Homebrew packages added to the [Brewfile](Brewfile), re-stows shell config, and pulls the parallel AI-brain repo (`masonmem/ai-sync`) so global skills / MCP / agent instructions stay in sync. Idempotent and direction-agnostic — same command on every host, regardless of where the change originated.
-
-Secrets (`~/code/ai-sync/secrets/*`) are **not** in dotfiles or Git (gitignored, `chmod 600`). Work-provider credentials belong in the approved credential store, not in either repository.
-
-## Which machines get what
-
-| Host             | Stow packages                         | brew         | `~/code/ai-sync` | Secrets |
-| ---------------- | ------------------------------------- | ------------ | -------------- | ------- |
-| **navi** (laptop)     | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/navi.Brewfile` | ✅ full | ✅ |
-| **solaris** (mini)    | everything (incl. `ollama`)      | Brewfile + `Brewfile.d/solaris.Brewfile` | ✅ full | ✅ |
-| **hyperion** (QNAP)   | `zsh p10k git` via manual ln loop (no stow) | none — Entware `opkg` | ❌ none | sops age key only |
-| **work MacBook**      | base set, **no `ollama`**        | Brewfile     | subset — no personal secrets | ❌ |
-| **devcontainers**     | nothing stowed — host mounts `.zshrc` + config read-only | none | ❌ | ❌ |
-
-Per-host package choice lives in `~/.config/dotfiles/packages` (see [Per-host package selection](#per-host-package-selection)).
-
----
-
-## Bootstrap a fresh Mac
+## Quick start: a new machine
 
 ```bash
-# 1. Install Homebrew
+# 1. Homebrew (macOS) — https://brew.sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# 2. Clone this repo and the AI-brain repo
-git clone git@github.com:masonmem/dotfiles.git    ~/dotfiles
-git clone git@github.com:masonmem/ai-sync.git     ~/code/ai-sync
+# 2. This repo. It must live at ~/dotfiles.
+git clone https://github.com/masonmem/dotfiles.git ~/dotfiles
+#    (Use HTTPS until this machine has an SSH key, then:
+#     git -C ~/dotfiles remote set-url origin git@github.com:masonmem/dotfiles.git)
 
-# 3. Install everything in the Brewfile (formulae + casks — pinned set)
-brew bundle --file=~/dotfiles/Brewfile
+# 3. Everything else
+~/dotfiles/install.sh personal   # personal Macs
+~/dotfiles/install.sh work       # the work machine: shared config only
+~/dotfiles/install.sh minimal    # servers / QNAP: zsh + prompt + git
 
-# 4. Install pipx-managed Python CLIs (not covered by brew bundle; see pipx-tools.txt)
-grep -v '^#' ~/dotfiles/pipx-tools.txt | grep . | xargs -n1 pipx install
-
-# 5. Install Rust toolchain (needed for the .zshenv cargo env)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# 6. Install + pin oh-my-zsh + powerlevel10k + zsh plugins (git clone, NOT in
-#    the Brewfile; the omz custom/ layout is the only mechanism). bootstrap-shell
-#    clones-if-missing then converges each clone to the ref pinned in
-#    shell-clones.txt — idempotent, and it also UPDATES an existing stale clone.
-bash ~/dotfiles/bin/bootstrap-shell
-
-# 7. Stow the dotfile packages you want (see Packages table below), and
-#    record the choice so dotfiles-sync re-stows the same set
-#    (see "Per-host package selection")
-cd ~/dotfiles && stow --no-folding zsh p10k tmux git nvim lazygit atuin
-mkdir -p ~/.config/dotfiles
-printf '%s\n' zsh p10k tmux git nvim lazygit atuin > ~/.config/dotfiles/packages
-# Personal Macs only — ollama is opt-in (local-LLM + agent wiring):
-#   stow --no-folding ollama && echo ollama >> ~/.config/dotfiles/packages
-#   then see ollama/README.md and ollama/launchagents/README.md (launchd agents)
-
-# 8. Set up the AI-brain links and checks.
-mkdir -m 700 -p ~/.copilot
-~/code/ai-sync/install.sh
-# Work machine: ~/code/ai-sync/install.sh --work
-
-# 9. Per-Mac files (templates / examples — none of these are stowed)
-cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config       # then edit for this Mac's hosts
-mkdir -p ~/.ssh/sockets && chmod 700 ~/.ssh ~/.ssh/sockets   # ControlPath mux dir
-${EDITOR:-vi} ~/.gitconfig.local                  # name/email
-# Optional: per-host shell overrides
-cp ~/dotfiles/zsh/.config/zsh/90-host.zsh.example \
-   ~/.config/zsh/90-$(hostname -s).zsh
-
-# 10. Populate machine-local secrets (or sync from another Mac you trust)
-mkdir -p ~/code/ai-sync/secrets   # personal hosts only; populate as needed
-# From an already-set-up Mac: ssh into this one and run `secrets-push <this-mac>`
+# 4. Agent config (skills, MCP, instructions) lives in its own repo
+git clone git@github.com:masonmem/ai-sync.git ~/code/ai-sync
+~/code/ai-sync/install.sh        # work machine: --work
 ```
 
-> **Why `--no-folding`?** Without it, stow symlinks entire directories (`~/.config/zsh → dotfiles/zsh/.config/zsh`). With it, stow links individual files, leaving room for untracked per-host overlays (`90-<hostname>.zsh`) alongside the stowed files.
+`install.sh` writes this host's package list, copies the untracked templates
+(`~/.gitconfig.local`, `~/.ssh/config`), and runs `dotfiles-sync`. Existing
+files that would block a link are moved to `<file>.pre-dotfiles`. It is safe to
+re-run. Afterwards, set your git identity in `~/.gitconfig.local` and open a new
+terminal.
 
-### Bootstrap on a non-Mac host (QNAP, Linux, etc.)
-
-The shell config is portable — same `.zshrc`, `.zprofile`, `.zshenv`, and `~/.config/zsh/*.zsh` work on any host with zsh. The catch: no Homebrew, so substitute the host's package manager. oh-my-zsh / powerlevel10k come via `bin/bootstrap-shell` (git clone, pinned by [`shell-clones.txt`](shell-clones.txt) — see [Shell framework pins](#shell-framework-pins-oh-my-zsh--p10k--plugins)) on every host, Mac or not.
+## Day to day
 
 ```bash
-# Adjust the package install line for your host (apt/apk/opkg/pacman/dnf):
-# QNAP via Entware:
-/opt/bin/opkg install zsh git bash eza fd fzf jq neovim ripgrep tmux htop nano
-
-# Clone the repo (HTTPS if no SSH key yet; switch to SSH after)
-git clone git@github.com:masonmem/dotfiles.git ~/dotfiles
-
-# Install oh-my-zsh + powerlevel10k + the two plugins (same script as the Mac path)
-bash ~/dotfiles/bin/bootstrap-shell
-
-# Symlink the tracked files. `stow` works if available; if not (Entware
-# doesn't ship it), do the equivalent by hand — the README's "How stow
-# works" diagram shows the target layout.
-cd ~/dotfiles
-command -v stow >/dev/null && stow --no-folding zsh p10k || {
-  for src in zsh/.zshrc zsh/.zprofile zsh/.zshenv; do
-    ln -sfn "$PWD/$src" "$HOME/$(basename $src)"
-  done
-  mkdir -p ~/.config/zsh
-  for src in zsh/.config/zsh/*.zsh; do
-    ln -sfn "$PWD/$src" "$HOME/.config/zsh/$(basename $src)"
-  done
-  ln -sfn "$PWD/zsh/.config/zsh/completions" ~/.config/zsh/completions
-  ln -sfn "$PWD/p10k/.p10k.zsh" ~/.p10k.zsh
-}
-
-# (Optional) per-host shell config — copy + edit the template
-cp zsh/.config/zsh/90-host.zsh.example ~/.config/zsh/90-$(hostname -s).zsh
-
-# Per-host overrides go in ~/.zshrc.early.local (untracked, sourced
-# before oh-my-zsh + p10k init — useful for POWERLEVEL9K_* vars).
+sync-all            # dotfiles + ai-sync
+sync-all dotfiles   # just this repo
 ```
 
-**QNAP-specific quirks**, in case anyone else runs into them on an embedded zsh build:
+`dotfiles-sync` (the dotfiles half) does, in order:
 
-1. **`setopt monitor` fails.** Entware's zsh build doesn't allow enabling job control. `gitstatus.plugin.zsh` line 604 (`setopt monitor || return`) aborts p10k's gitstatus init. Patch by replacing `|| return` with `2>/dev/null || true`.
-2. **`mkfifo` is missing.** QNAP's busybox doesn't ship a standalone `mkfifo`, but gitstatusd needs it for IPC. Install it manually because Entware's `coreutils-mkfifo` package can't write to `/opt/libexec` without root:
+1. **pull**: fast-forward from GitHub. If you have uncommitted changes, local
+   commits that diverged, or no network, it skips the pull with a warning and
+   still does the rest. If the pull changed `dotfiles-sync` itself, it re-runs
+   the new version.
+2. **brew**: `Brewfile`, then each enabled package's `Brewfile`, then
+   `Brewfile.d/<host>.Brewfile`. It only installs what's missing and never
+   upgrades.
+3. **pipx**: each enabled package's `pipx-tools.txt` (missing tools only).
+4. **shell framework**: `bootstrap-shell` moves oh-my-zsh, powerlevel10k and
+   the plugins to the commits pinned in `shell-clones.txt`.
+5. **link**: `stow --no-folding -R` for each enabled package (a built-in
+   equivalent where stow isn't installed), then removes symlinks to files that
+   were deleted from the repo.
+
+To change something, edit the file (the symlink or `~/dotfiles/...`, it's the
+same file), run `tests/run`, commit, push. New, changed, renamed and deleted
+files all reach the other machines on their next `sync-all`.
+
+## Packages and profiles
+
+A top-level directory with files laid out as they should appear in `$HOME` is a
+**package**. Each host enables a set of packages in
+`~/.config/dotfiles/packages` (untracked, one name per line). `install.sh`
+writes it from a profile, and you can edit it any time. There is deliberately no
+default, so a machine never gets personal packages by accident.
+
+| Package | Contents | personal | work | minimal |
+|---|---|:-:|:-:|:-:|
+| `zsh` | `.zshenv`, `.zprofile`, `.zshrc`, `.config/zsh/*.zsh` | ✅ | ✅ | ✅ |
+| `p10k` | `.p10k.zsh` (prompt) | ✅ | ✅ | ✅ |
+| `git` | `.gitconfig`, global ignore | ✅ | ✅ | ✅ |
+| `tmux` | `.tmux.conf` | ✅ | ✅ | |
+| `nvim` | `.config/nvim/init.lua` | ✅ | ✅ | |
+| `lazygit` | `.config/lazygit/config.yml` | ✅ | ✅ | |
+| `atuin` | `.config/atuin/` | ✅ | ✅ | |
+| `personal` | personal-only shell config (Copilot telemetry, media and VPN aliases); homelab and media tools (`Brewfile`); MCP servers etc. (`pipx-tools.txt`) | ✅ | | |
+| `ollama` | local-LLM agent stack: aider / opencode / goose configs, LiteLLM keys, and their `Brewfile`. See [ollama/README.md](ollama/README.md). | ✅ | | |
+
+A package can hold files that are *not* linked. Its `.stow-local-ignore` lists
+them: a `Brewfile` or `pipx-tools.txt` for `dotfiles-sync`, a README, or server
+files such as `ollama/launchagents/`.
+
+### Where does this go?
+
+| I want… | Put it in |
+|---|---|
+| a tool on every Mac, including work | `Brewfile` |
+| a tool on personal Macs only | `personal/Brewfile` (or `ollama/Brewfile` for the LLM stack) |
+| a tool on one host | `Brewfile.d/<host>.Brewfile` (host name lowercased; `dotfiles-sync` prints it) |
+| a Python CLI on personal Macs | `personal/pipx-tools.txt` |
+| shell config everywhere | `zsh/.config/zsh/NN-name.zsh` |
+| shell config on personal Macs only | `personal/.config/zsh/` |
+| shell config on one host | `~/.config/zsh/90-<host>.zsh`, untracked (start from `templates/zsh-host.zsh`) |
+| git settings everywhere | `git/.gitconfig` |
+| git identity, work git settings | `~/.gitconfig.local`, untracked (included last, so it overrides everything) |
+| SSH hosts | `~/.ssh/config`, untracked |
+
+### Machines
+
+| Host | Profile | Brewfiles | ai-sync |
+|---|---|---|---|
+| **navi** (laptop) | personal | shared + personal + ollama + `navi` | full |
+| **solaris** (Mac mini, always on) | personal | shared + personal + ollama + `solaris` | full |
+| **work MacBook** | work | shared | `--work`, no personal secrets |
+| **hyperion** (QNAP) | minimal | none (Entware `opkg`) | none; sops age key only |
+| **dev containers** | none; mounts the host's files | `scripts/devcontainer-tools.sh` | `--work --container` |
+
+## Untracked, per-machine files
+
+| File | Purpose | Created by |
+|---|---|---|
+| `~/.config/dotfiles/packages` | packages enabled on this host | `install.sh` |
+| `~/.gitconfig.local` | `[user]` identity, work settings (`includeIf "gitdir:~/work/"`), host overrides | `install.sh`, from `templates/gitconfig.local` |
+| `~/.ssh/config` | SSH hosts (`Host *` defaults go last) | `install.sh`, from `templates/ssh_config` |
+| `~/.config/zsh/90-<host>.zsh` | per-host aliases/env, sourced last | you, from `templates/zsh-host.zsh` |
+| `~/.zshrc.early.local` | settings needed before oh-my-zsh/p10k load (`ZSH_THEME`, `POWERLEVEL9K_*`) | you |
+| `~/code/ai-sync/secrets/` | tokens (e.g. the GitHub PAT that `12-github-cli.zsh` exports as `GH_TOKEN`) | ai-sync |
+
+## Shell
+
+Startup order:
+
+| File | Runs for | Does |
+|---|---|---|
+| `~/.zshenv` | every zsh, including `ssh host cmd`, scripts and launchd | **the** PATH definition (missing dirs dropped, no duplicates), XDG dirs |
+| `~/.zprofile` | login shells | re-applies `.zshenv`, because macOS `path_helper` reorders PATH in between |
+| `~/.zshrc` | interactive shells | `~/.zshrc.early.local`, p10k instant prompt, oh-my-zsh, then `~/.config/zsh/*.zsh` in name order |
+
+| File | Purpose |
+|---|---|
+| `05-devcontainer.zsh` | inside containers only: install tools on first shell, apply work-safe ai-sync |
+| `10-env.zsh` | `EDITOR` (nvim, falls back to vim/vi), `BAT_THEME`, `LESS`, `NVM_DIR` |
+| `12-github-cli.zsh` | `GH_TOKEN` from the ai-sync PAT, if present |
+| `20-aliases.zsh` | `cat`→bat, `ls`→eza, `vi`→nvim, `kubectl`→kubecolor, `cc`→claude, `lg`→lazygit; each only if the tool exists (containers keep native `ls`) |
+| `30-completions.zsh` | kubectl completion, cached in `~/.cache/zsh/completions` |
+| `40-tools.zsh` | `copilot` wrapper (drops the duplicate GitHub MCP), fzf (Ctrl-T, Alt-C), atuin (Ctrl-R, ↑), zoxide (`cd`, `zi`) |
+| `70-nvm.zsh` | lazy nvm: loaded on first `nvm`/`node`/`npm`/`npx`/`yarn`/`pnpm` |
+
+Everything degrades gracefully: a missing tool means a skipped alias or
+integration, never a broken command. The same files work on macOS, Linux, QNAP
+and in containers.
+
+### Shell framework pins
+
+oh-my-zsh, powerlevel10k, zsh-autosuggestions and zsh-syntax-highlighting are git
+clones under `~/.oh-my-zsh` (that is where `.zshrc` loads them from), not
+Homebrew formulae. [`shell-clones.txt`](shell-clones.txt) pins each to a commit.
+`bootstrap-shell` clones anything missing and moves stale clones to the pin. It
+does nothing, and touches no network, when a clone is already there. It leaves a
+clone with local edits alone, apart from hyperion's QNAP patch, which it sets
+aside and re-applies.
+
+To upgrade: check out the new commit in the clone, confirm the prompt still
+renders, update the SHA (and tag comment) in `shell-clones.txt`, then commit
+and push.
+
+## QNAP (hyperion)
+
+```sh
+/opt/bin/opkg install zsh git bash eza fd fzf jq neovim ripgrep tmux htop nano
+git clone https://github.com/masonmem/dotfiles.git ~/dotfiles
+~/dotfiles/install.sh minimal     # no stow on Entware: uses the built-in linker
+```
+
+QNAP quirks:
+
+1. **`setopt monitor` fails** on Entware's zsh, which aborts p10k's gitstatus.
+   [`bin/qnap-gitstatus-fix`](bin/qnap-gitstatus-fix) patches that line.
+   `bootstrap-shell` runs it automatically whenever the p10k pin moves.
+2. **`mkfifo` is missing** from QNAP's busybox, and gitstatusd needs it. Install
+   it by hand to `~/bin` (Entware's package can't write `/opt/libexec` without
+   root):
    ```sh
-   # On any other Linux/Mac with `ar`+`tar`:
+   # on any machine with curl + tar:
    curl -sLO http://bin.entware.net/x64-k3.2/coreutils-mkfifo_9.9-2_x64-3.2.ipk
-   # (the .ipk is just a gzipped tarball-of-tarballs)
    mkdir extract && tar xzf coreutils-mkfifo_9.9-2_x64-3.2.ipk -C extract
    tar xzf extract/data.tar.gz -C extract
-   scp extract/opt/libexec/mkfifo-coreutils <qnap>:bin/mkfifo
-   ssh <qnap> 'chmod +x ~/bin/mkfifo'
-   # ~/bin is already on the dotfiles PATH (via 00-path.zsh).
+   scp extract/opt/libexec/mkfifo-coreutils hyperion:bin/mkfifo
+   ssh hyperion 'chmod +x ~/bin/mkfifo'
    ```
-
-Both fixes are bundled into [`bin/qnap-gitstatus-fix`](bin/qnap-gitstatus-fix) (idempotent re-patcher, tracked in this repo; `~/dotfiles/bin` is on PATH via `00-path.zsh`) — run it after any future `cd ~/.oh-my-zsh/custom/themes/powerlevel10k && git pull` to re-apply the gitstatus patch.
-
-3. **`~/.profile` must hand login shells to zsh.** QNAP owns the sh login flow, so this file stays machine-local (untracked) — recreate it on a rebuild:
+3. **`~/.profile` must hand login shells to zsh.** QNAP owns the sh login flow,
+   so this file stays untracked. Recreate it on a rebuild:
    ```sh
    export PATH=$PATH:$(getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg/Tailscale/
    export PATH=/opt/bin:/opt/sbin:/opt/usr/bin:/opt/usr/sbin:$PATH
    export PATH=$PATH:/share/CACHEDEV3_DATA/.qpkg/container-station/bin
-
-   # Hand off to zsh for interactive logins. Use `tty -s` which is the
-   # canonical "is stdin a tty?" check and works even when sshd does not
-   # export SSH_TTY (QNAP busybox sshd behavior).
+   # `tty -s` works even when busybox sshd doesn't set SSH_TTY.
    if [ -x /opt/bin/zsh ] && [ -z "$ZSH_VERSION" ] && [ -z "$SSH_ORIGINAL_COMMAND" ] && tty -s; then
      export SHELL=/opt/bin/zsh
      exec /opt/bin/zsh -l
    fi
    ```
 
-4. **Suggested `90-hyperion.zsh` starting point** (per-host overrides are untracked by design — see "What's NOT stowed"): short git/docker aliases, e.g. `alias g=git gs="git status" d=docker dc="docker compose"` and `alias dcontainers='docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"'`.
+## Dev containers
 
-Stowed-config quirks on non-Macs are handled automatically by the dotfiles: `.zprofile`'s `brew shellenv` is guarded behind `[[ -x /opt/homebrew/bin/brew ]]`, `.zshenv`'s cargo source is guarded behind `[[ -r ~/.cargo/env ]]`, and the `macos` oh-my-zsh plugin only loads on Darwin. Entware paths (`/opt/bin`, `/opt/usr/bin`) are added to PATH conditionally — Mac hosts skip them because the dirs don't exist.
-
----
-
-## Day-to-day sync
-
-```bash
-sync-all              # pull dotfiles + ai-sync; install new brew packages
-sync-all dotfiles     # only one if you want
-sync-all ai-sync
-```
-
-Same command on every Mac. Bails on a dirty working tree in either repo (won't trample local edits).
-
-After rotating a secret on machine A and you want machine B to pick it up:
-
-```bash
-# from A:
-secrets-push B
-```
-
-(Or hostname instead of "B" — `secrets-push` defaults to `solaris` since that's the always-on box, but accepts any SSH host alias.)
-
----
-
-## Shell framework pins (oh-my-zsh / p10k / plugins)
-
-oh-my-zsh, powerlevel10k, and the two zsh plugins (`zsh-autosuggestions`, `zsh-syntax-highlighting`) are **not** in the Brewfile — `.zshrc` loads the theme + plugins from `~/.oh-my-zsh/custom/`, so a **git clone** is the only mechanism every host (Mac or QNAP/Entware) actually uses. They used to be the one dependency class the repo neither pinned nor updated: `bootstrap-shell` cloned-if-missing only, so each host stayed frozen at whatever it was first set up with — navi silently ran a 2022 p10k until 2026 and the unified `.p10k.zsh` couldn't render on it.
-
-Now they're a **declared, pinned, converging** dependency — same philosophy as the [Brewfile](Brewfile) and [pipx-tools.txt](pipx-tools.txt):
-
-- **[`shell-clones.txt`](shell-clones.txt)** declares each clone's upstream URL + a pinned commit SHA (with the human-readable tag in a comment). This is the single source of truth for which versions every host runs.
-- **[`bin/bootstrap-shell`](bin/bootstrap-shell)** converges to those pins: clone if absent, otherwise `git fetch` + `git checkout <pinned-ref>`. It is idempotent (a clone already at its pin is a cheap no-op — no network), it **brings a stale clone up to the pin** (the bug that rotted navi), and it **will not clobber a clone with local edits** (hyperion's QNAP gitstatus patch) — it warns and skips instead. When it actually moves the p10k ref it clears the stale `~/.cache/gitstatus` and `~/.cache/p10k-instant-prompt-*.zsh` (required for the new p10k to render) and re-runs [`qnap-gitstatus-fix`](bin/qnap-gitstatus-fix) on non-Mac hosts.
-- **`dotfiles-sync` runs `bootstrap-shell` on every host after pulling**, so a normal `sync-all` keeps these current. It only needs `git`, so it works on hyperion (no brew/stow there).
-
-**Update workflow** — same as bumping a Brewfile version:
-
-```bash
-# 1. Update the clone you're testing against, confirm the prompt still renders.
-cd ~/.oh-my-zsh/custom/themes/powerlevel10k && git fetch && git checkout <new-sha>
-# 2. Bump the pin in shell-clones.txt to that SHA (update the tag comment too).
-${EDITOR:-vi} ~/dotfiles/shell-clones.txt
-# 3. Commit + push. Every other machine converges on its next `sync-all`.
-```
-
-> **hyperion note:** the p10k clone carries a local edit (the QNAP `setopt monitor` patch). `bootstrap-shell` detects the dirty tree and **skips** it rather than clobbering the patch — so on hyperion, after bumping the p10k pin you must `git stash` the patch, let `bootstrap-shell` converge, then `qnap-gitstatus-fix` re-applies it (bootstrap-shell calls it automatically once the checkout lands). hyperion's clones are also shallow; `bootstrap-shell` unshallows them on demand to reach the pinned SHA.
-
----
-
-## How stow works
-
-Each subdirectory is a **package**. `stow <package>` creates symlinks from `~` into that package, mirroring its directory structure. Files live in `~/dotfiles/` — edits to either the symlink target or the repo file are live immediately.
-
-```text
-~/dotfiles/zsh/.zshrc                       →  stow  →  ~/.zshrc                       (symlink)
-~/dotfiles/zsh/.config/zsh/20-aliases.zsh   →  stow  →  ~/.config/zsh/20-aliases.zsh   (symlink)
-```
-
-| Operation              | Command                          |
-| ---------------------- | -------------------------------- |
-| Link a package         | `stow --no-folding <package>`    |
-| Unlink a package       | `stow -D <package>`              |
-| Re-link after changes  | `stow --no-folding -R <package>` |
-| Preview (dry run)      | `stow -n --no-folding <package>` |
-
----
-
-## Packages
-
-| Package    | What it manages                                                          | Stow universally?              |
-| ---------- | ------------------------------------------------------------------------ | ------------------------------ |
-| `zsh/`     | `.zshrc`, `.zprofile`, `.zshenv`, `.config/zsh/**`                       | ✅ Yes                          |
-| `p10k/`    | `.p10k.zsh`                                                              | ✅ Yes                          |
-| `tmux/`    | `.tmux.conf`                                                             | ✅ Yes                          |
-| `git/`     | `.gitconfig`                                                             | ✅ Yes                          |
-| `nvim/`    | `.config/nvim/init.lua`                                                  | ✅ Yes                          |
-| `lazygit/` | `.config/lazygit/config.yml`                                             | ✅ Yes                          |
-| `atuin/`   | `.config/atuin/config.toml`, themes                                      | ✅ Yes                          |
-| `ollama/`  | Local Ollama tuning + LiteLLM gateway env, agent wiring (aider/opencode/goose) | **Opt-in.** Don't stow on work machines unless you've cleared local-LLM tooling with your employer. |
-| `ssh/`     | `.ssh/config`                                                            | ❌ Template only — copy + edit  |
-
-### Per-host package selection
-
-`dotfiles-sync` stows the packages listed in `~/.config/dotfiles/packages` (untracked; one per line, `#` comments). If the file doesn't exist it falls back to the full personal-Mac set (including `ollama`). Create it once per host:
-
-```bash
-mkdir -p ~/.config/dotfiles
-printf '%s\n' zsh p10k tmux git nvim lazygit atuin ollama > ~/.config/dotfiles/packages
-# work MacBook: same line WITHOUT ollama
-# hyperion:     printf '%s\n' zsh p10k git > ~/.config/dotfiles/packages
-```
-
-Brew packages vary per host the same way: shared `Brewfile` everywhere, plus an optional `Brewfile.d/<host>.Brewfile` that `dotfiles-sync` installs automatically — see "Per-host extras" under [Brewfile workflow](#brewfile-workflow).
-
----
-
-## What's NOT stowed (and why)
-
-Machine-specific or sensitive — kept on each Mac, not in the repo.
-
-| File                                  | Purpose                                          | Bootstrap                                                          |
-| ------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| `~/.gitconfig.local`                  | `[user]` name/email, host-local URLs, and per-host overrides for stowed config (e.g. set `[core] pager = less -FRX` on hosts that don't have `delta` installed) | Create manually — `[include]` from `~/.gitconfig` loads it (last include wins on duplicate keys) |
-| `~/.ssh/config`                       | SSH hosts, keys, algorithms                      | `cp ~/dotfiles/ssh/.ssh/config ~/.ssh/config` then edit            |
-| `~/.config/zsh/90-<hostname>.zsh`     | Per-host shell overrides (`k8s` contexts, etc.)  | Copy `90-host.zsh.example` to `90-<hostname>.zsh`                  |
-| `~/.nvm/`                             | Node versions managed by nvm                     | `mkdir -p ~/.nvm`                                                  |
-
-The `.zshrc` auto-sources `~/.config/zsh/*.zsh` in alphabetical order. Numbered files in the 90-* range run last — perfect for overriding earlier aliases or env vars per host.
-
----
-
-## What each file does
-
-| File                                  | Purpose                                                                                            |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `Brewfile`                            | Curated list of formulae + casks (shared across machines)                                          |
-| `bin/sync-all`                        | One-command pull of dotfiles + ai-sync + brew bundle                                               |
-| `bin/dotfiles-sync`                   | Pull this repo + brew bundle + re-stow                                                             |
-| `bin/dexec`                           | Convenience helper for `docker exec`                                                               |
-| `scripts/devcontainer-tools.sh`       | Installs CLI tools inside Linux dev containers                                                     |
-| `~/.zshrc`                            | Shell entry point — loads oh-my-zsh + sources `~/.config/zsh/*.zsh`                                |
-| `~/.zshenv`                           | Every-shell PATH (~/bin, Entware, Container Station, Homebrew, ai-sync/bin) + cargo env + `_ZO_DOCTOR` |
-| `~/.zprofile`                         | Homebrew shellenv + pipx PATH (login shells)                                                       |
-| `~/.config/zsh/00-path.zsh`           | PATH deduplication                                                                                 |
-| `~/.config/zsh/05-devcontainer.zsh`   | Auto-installs tools on first container shell launch                                                |
-| `~/.config/zsh/10-env.zsh`            | EDITOR, XDG dirs, BAT_THEME, NVM_DIR                                                               |
-| `~/.config/zsh/20-aliases.zsh`        | Modern CLI aliases (bat/eza/kubecolor/lazygit/nvim) — all `command -v`-guarded so missing tools don't shadow real ones |
-| `~/.config/zsh/30-completions.zsh`    | kubectl completion cache + kubecolor compdef                                                       |
-| `~/.config/zsh/40-tools.zsh`          | fzf (Ctrl-T/Alt-C), atuin (Ctrl-R), zoxide (replaces `cd`)                                         |
-| `~/.config/zsh/70-nvm.zsh`            | Lazy NVM — loads Node only when first invoked                                                      |
-| `~/.config/zsh/90-host.zsh.example`   | Template for per-host overrides — copy to `90-<hostname>.zsh` (untracked)                          |
-| `~/.gitconfig`                        | delta pager, aliases, `[include] ~/.gitconfig.local`                                               |
-| `~/.config/nvim/init.lua`             | Neovim — lazy.nvim, treesitter, telescope, catppuccin                                              |
-| `~/.config/lazygit/config.yml`        | lazygit — delta diffs, catppuccin theme, nvim integration                                          |
-| `~/.p10k.zsh`                         | Powerlevel10k prompt config                                                                        |
-| `~/.tmux.conf`                        | tmux — prefix Ctrl-B, mouse, vim nav, catppuccin status bar                                        |
-
----
-
-## Shell structure
-
-`.zshrc` is a thin loader. The real config lives in numbered files under `~/.config/zsh/`. Source order matters, hence the numeric prefixes. Add a new file and it's picked up automatically on next shell start.
-
-**Per-host overrides:** copy `90-host.zsh.example` to `~/.config/zsh/90-<hostname>.zsh` (untracked) for anything Mac-specific. Sources last, so it can override anything earlier in the chain.
-
-**Devcontainer support:** `.zshrc` detects the `DEVCONTAINER=1` env var and adjusts plugins accordingly (skips macOS-only plugins). The `05-devcontainer.zsh` file bootstraps CLI tools on first shell open inside a container.
-
-**Tooling note:** every alias in `20-aliases.zsh` that depends on an optional binary (`bat`, `eza`, `nvim`, `lazygit`, `kubecolor`, `yt-dlp`) is gated with `command -v` so a host without the tool falls back to the underlying command (`cat`, `ls`, `vi`, etc.) instead of shadowing it with something missing. Dev containers always keep native `ls` (with native `ll`/`la` helpers) because a cached or host-incompatible `eza` must not make basic directory listing crash. This makes the same config usable on minimal hosts (Linux dev containers, NAS shells with limited tooling) without per-host carve-outs.
-
-Key tooling:
-
-- **atuin** owns `Ctrl-R` (history search). fzf handles `Ctrl-T` (file picker) and `Alt-C` (dir picker).
-- **zoxide** replaces `cd` transparently (`--cmd cd`). Use `zi` for the interactive picker.
-- **nvm** is lazy-loaded — `node`, `npm`, `npx`, `yarn`, `pnpm` trigger the load on first call.
-- **kubecolor** is aliased to `kubectl`; completions delegate to the real `kubectl` binary.
-- **delta** is the git pager for both CLI (`git diff`) and lazygit. Shared syntax theme (Catppuccin).
-
----
-
-## Brewfile workflow
-
-The Brewfile is a curated manifest of top-level packages (not a dump of everything installed). To keep it in sync:
-
-```bash
-# Install everything in the Brewfile (idempotent — skips already-installed)
-brew bundle --file=~/dotfiles/Brewfile
-
-# After manually installing something new you want everywhere:
-# → Edit ~/dotfiles/Brewfile, add the line, commit & push
-# → Other Macs pick it up next time they run `sync-all`
-
-# See what's installed but NOT in the Brewfile (drift):
-brew bundle cleanup --file=~/dotfiles/Brewfile
-
-# See what's in the Brewfile but NOT installed (missing):
-brew bundle check --no-upgrade --file=~/dotfiles/Brewfile --verbose
-```
-
-> **Don't use `brew bundle dump`** to overwrite the Brewfile — it captures every transitive dependency and machine-specific noise. Maintain the Brewfile manually as the "what I want everywhere" list.
-
-### Per-host extras: `Brewfile.d/<host>.Brewfile`
-
-Packages one machine needs that the others shouldn't get (e.g. solaris's server role: `periphery`, `node_exporter`, `glances`) live in `Brewfile.d/<host>.Brewfile`, keyed on `hostname -s` lowercased. `dotfiles-sync` installs the host file automatically after the shared Brewfile when one exists. Check it the same way:
-
-```bash
-brew bundle check --no-upgrade --file=~/dotfiles/Brewfile.d/$(hostname -s | tr 'A-Z' 'a-z').Brewfile
-```
-
----
-
-## Devcontainer support
-
-The shell config is designed to work inside Linux dev containers. The setup:
-
-1. **Mount host config into container** — `.zshrc`, `.oh-my-zsh`, `.p10k.zsh`, `~/.config/zsh/`, git config, nvim/lazygit config.
-2. **Auto-install CLI tools** — `05-devcontainer.zsh` runs `scripts/devcontainer-tools.sh` on first shell open (installs bat, eza, fd, rg, fzf, zoxide, atuin, lazygit, nvim, delta from pre-built Linux binaries). `eza` remains explicitly callable, but `ls` stays native in containers.
-3. **Graceful degradation** — all tool init scripts use `command -v` guards; missing tools are silently skipped (same pattern as the alias guards).
-
-Mount these volumes in your `docker-compose.override.yml`:
+Nothing is installed into the container's `$HOME`. It mounts the host's files
+instead, read-only. The config directories contain symlinks into `~/dotfiles`,
+so mount the repo at the same path:
 
 ```yaml
+# docker-compose.override.yml
 volumes:
+  - ${HOME}/dotfiles:/root/dotfiles:ro
+  - ${HOME}/.zshenv:/root/.zshenv:ro
   - ${HOME}/.zshrc:/root/.zshrc:ro
-  - ${HOME}/.oh-my-zsh:/root/.oh-my-zsh:ro
   - ${HOME}/.p10k.zsh:/root/.p10k.zsh:ro
+  - ${HOME}/.oh-my-zsh:/root/.oh-my-zsh:ro
   - ${HOME}/.config/zsh:/root/.config/zsh:ro
+  - ${HOME}/.config/nvim:/root/.config/nvim:ro
+  - ${HOME}/.config/lazygit:/root/.config/lazygit:ro
   - ${HOME}/.gitconfig:/root/.gitconfig:ro
   - ${HOME}/.gitconfig.local:/root/.gitconfig.local:ro
-  - ${HOME}/.config/lazygit:/root/.config/lazygit:ro
-  - ${HOME}/.config/nvim:/root/.config/nvim:ro
-  - ${HOME}/dotfiles/scripts:/opt/dotfiles-scripts:ro
+  - devcontainer-tools:/var/cache/devcontainer-tools   # named volume: tool cache
 environment:
   - DEVCONTAINER=1
   - SHELL=/bin/zsh
@@ -376,44 +228,45 @@ environment:
   - LC_ALL=C.UTF-8
 ```
 
----
+On the first shell, `05-devcontainer.zsh` runs
+[`scripts/devcontainer-tools.sh`](scripts/devcontainer-tools.sh). It installs
+bat, eza, fd, rg, fzf, zoxide, atuin, lazygit, nvim, delta, kubecolor and tldr
+from upstream release binaries. `ls` stays native in containers; `eza` is still
+there if you call it directly. `bin/dexec` opens a shell in, or runs a command in,
+the running dev container.
+
+## Tests
+
+```bash
+tests/run             # shellcheck, zsh syntax, unit tests, sync + startup integration tests
+tests/run --offline   # skip the startup test (it clones the shell framework)
+```
+
+CI runs the same on every push, on Linux and on macOS with Apple's bash 3.2.
+`#!/usr/bin/env bash` finds that bash on the Macs, so scripts must stay
+compatible with it.
 
 ## Guides
 
-| Guide                                                        | Topic                                               |
-| ------------------------------------------------------------ | --------------------------------------------------- |
-| [docs/neovim-guide.md](docs/neovim-guide.md)                 | Neovim config, plugins, keybindings, modal editing  |
-| [docs/lazygit-guide.md](docs/lazygit-guide.md)               | lazygit TUI — staging, commits, rebase, cherry-pick |
-| [docs/tmux-guide.md](docs/tmux-guide.md)                     | tmux sessions, windows, panes, copy mode            |
-| [docs/shell-tools-guide.md](docs/shell-tools-guide.md)       | fzf, atuin, zoxide, bat, eza, fd, ripgrep           |
+| Guide | Topic |
+|---|---|
+| [docs/neovim-guide.md](docs/neovim-guide.md) | Neovim config, plugins, keybindings, modal editing |
+| [docs/lazygit-guide.md](docs/lazygit-guide.md) | lazygit: staging, commits, rebase, cherry-pick |
+| [docs/tmux-guide.md](docs/tmux-guide.md) | tmux sessions, windows, panes, copy mode |
+| [docs/shell-tools-guide.md](docs/shell-tools-guide.md) | fzf, atuin, zoxide, bat, eza, fd, ripgrep, delta |
 
----
-
-## Editing dotfiles
-
-Stow uses symlinks — edit files at `~/.zshrc` or `~/dotfiles/zsh/.zshrc` (same file). Then commit:
+## Handy checks
 
 ```bash
-cd ~/dotfiles
-git add -A
-git commit -m "feat: ..."
-git push
+brew bundle check --no-upgrade --file=~/dotfiles/Brewfile --verbose   # missing packages
+brew bundle cleanup --file=~/dotfiles/Brewfile                        # installed but not listed (dry run)
+stow -n -v --no-folding -d ~/dotfiles -t ~ zsh                        # preview what stow would link
+git -C ~/dotfiles rev-parse HEAD; ssh solaris 'git -C ~/dotfiles rev-parse HEAD'   # same commit?
 ```
 
-Other Macs pick up the change on their next `sync-all`.
+Keep Brewfiles curated by hand. `brew bundle dump` captures every dependency
+and machine-specific noise.
 
-### Optional: cron / launchd auto-sync
-
-`sync-all` runs cleanly under launchd. On a Mac you want to keep up-to-date passively, drop in `~/Library/LaunchAgents/sh.user.sync-all.plist` with `StartInterval` of 600 (10 min) pointing at `$HOME/dotfiles/bin/sync-all` (launchd needs the absolute path; it is never in `/opt/homebrew/bin`). Mirror the structure used by the `notes-sync` / `komodo-monitor` plists in the homelab repo. Not enabled by default — opt in when you trust the flow.
-
-### Sanity-check parity across two Macs
-
-```sh
-# Same dotfiles HEAD?
-ssh <other-mac> 'git -C ~/dotfiles rev-parse HEAD'
-git -C ~/dotfiles rev-parse HEAD
-
-# Same Brewfile state?
-brew bundle check --no-upgrade --file=~/dotfiles/Brewfile
-ssh <other-mac> '/opt/homebrew/bin/brew bundle check --no-upgrade --file=~/dotfiles/Brewfile'
-```
+For hands-off syncing, a launchd agent can run `$HOME/dotfiles/bin/sync-all`
+on a `StartInterval` (launchd needs the absolute path). It is off by default;
+turn it on once you trust the flow.

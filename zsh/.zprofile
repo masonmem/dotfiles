@@ -1,6 +1,6 @@
-# Homebrew (Mac) — gated so this file is safe to source on non-Mac hosts
-# (e.g. QNAP / Linux containers) where brew isn't installed.
-[[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
-
-# pipx default user bin (created by `pipx` 2025-09-09)
-export PATH="$PATH:$HOME/.local/bin"
+# ~/.zprofile — login shells only.
+#
+# On macOS, /etc/zprofile runs path_helper after ~/.zshenv, moving the system
+# directories ahead of ours (so /usr/bin/git would beat Homebrew's). Re-apply
+# our PATH order. Harmless elsewhere: .zshenv is idempotent.
+source "$HOME/.zshenv"
