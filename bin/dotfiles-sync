@@ -25,7 +25,7 @@ set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 MANIFEST="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/packages"
-NON_PACKAGES=" bin docs scripts templates tests Brewfile.d "
+NON_PACKAGES=" bin docs scripts templates tests Brewfile.d site "   # site/ = local docs build
 
 BACKUP_CONFLICTS=0
 for arg in "$@"; do

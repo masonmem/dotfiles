@@ -26,6 +26,11 @@ step "brew output visible" python3 -m unittest -q tests/test-dotfiles-sync.py
 step "zsh alias policy"   zsh tests/test-zsh-aliases.zsh
 step "dotfiles-sync"      tests/test-dotfiles-sync.sh
 [[ "${1:-}" == --offline ]] || step "shell startup" tests/test-shell-startup.sh
+if command -v mkdocs >/dev/null 2>&1; then
+  step "docs build (strict)" mkdocs build --strict --quiet --site-dir "$(mktemp -d)"
+else
+  echo; echo "(skipping docs build: mkdocs not installed — pip install -r docs/requirements.txt)"
+fi
 
 echo
 if (( ${#failed[@]} )); then echo "FAILED: ${failed[*]}"; exit 1; fi

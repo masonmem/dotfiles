@@ -22,12 +22,14 @@ MANIFEST="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/packages"
 log()  { printf '\033[36m[install]\033[0m %s\n' "$*"; }
 warn() { printf '\033[33m[install] WARN:\033[0m %s\n' "$*" >&2; }
 
+# --8<-- [start:profiles]
 case "${1:-}" in
   personal) packages="zsh p10k tmux git nvim lazygit atuin personal ollama" ;;
   work)     packages="zsh p10k tmux git nvim lazygit atuin" ;;
   minimal)  packages="zsh p10k git" ;;
   *) sed -n '2,/^set -e/{/^set -e/d;s/^# \{0,1\}//;p;}' "$0" >&2; exit 2 ;;
 esac
+# --8<-- [end:profiles]
 
 if [[ "$DOTFILES" != "$HOME/dotfiles" ]]; then
   warn "this repo is at $DOTFILES; the shell config expects ~/dotfiles"
