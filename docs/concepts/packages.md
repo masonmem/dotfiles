@@ -6,7 +6,7 @@ A **package** is any top-level folder of the repo, apart from these, which are
 never linked:
 
 `bin/` · `docs/` · `scripts/` · `templates/` · `tests/` · `Brewfile.d/` · `site/` ·
-anything starting with `.` (such as `.github/`)
+anything starting with `.` (such as `.githooks/`)
 
 Inside a package, files are laid out as they should appear in `$HOME`. A
 package can also carry three things that are **not** linked:

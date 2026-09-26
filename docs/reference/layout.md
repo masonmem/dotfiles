@@ -42,6 +42,7 @@ dotfiles/
 │   ├── bootstrap-shell        converge ~/.oh-my-zsh clones to shell-clones.txt
 │   ├── qnap-gitstatus-fix     QNAP patch for p10k's gitstatus
 │   ├── dexec                  shell / command in a running dev container
+│   ├── dotfiles-docs          serve / build this documentation site locally
 │   └── configure-vscode-ai    merge AI-related VS Code settings
 ├── scripts/devcontainer-tools.sh   install CLI tools inside a Linux container
 ├── templates/                 untracked per-machine files, copied once by install.sh
@@ -50,7 +51,7 @@ dotfiles/
 │   └── zsh-host.zsh           → ~/.config/zsh/90-<host>.zsh (copy by hand)
 ├── tests/                     tests/run + the individual tests
 ├── docs/                      this site (MkDocs); mkdocs.yml at the root
-└── .github/workflows/         ci.yml (tests), docs.yml (publish this site)
+└── .githooks/pre-push         runs tests/run --offline before every push (enabled by dotfiles-sync)
 ```
 
 `bin/` is on PATH everywhere (via `~/.zshenv`), so its commands work as plain

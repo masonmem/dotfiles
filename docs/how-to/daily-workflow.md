@@ -34,8 +34,8 @@ links are removed, and new Brewfile entries are installed.
 !!! tip "Why run the tests"
     `sync-all` copies a mistake to every machine. `tests/run` catches the usual
     ones: shell syntax errors, shellcheck findings, a startup that prints
-    errors, broken sync logic. CI runs the same checks on every push, on Linux
-    and on macOS.
+    errors, broken sync logic. You can't forget: the pre-push hook runs
+    `tests/run --offline` before every push and blocks it if anything fails.
 
 ## What happens if you forget to commit
 

@@ -18,6 +18,9 @@
 # written by install.sh). That file is what keeps personal packages off the
 # work machine, so there is deliberately no default.
 #
+# It also points this clone at the tracked git hooks (.githooks/pre-push runs
+# tests/run before every push).
+#
 # Options:
 #   --backup-conflicts  move a real file that blocks a link to <file>.pre-dotfiles
 #                       (install.sh uses this on a fresh machine)
@@ -45,6 +48,13 @@ have() { command -v "$1" >/dev/null 2>&1; }
 have brew || PATH="$PATH:/opt/homebrew/bin"
 
 cd "$DOTFILES"
+
+# The repo's checks run from a pre-push hook (no hosted CI). Hooks aren't
+# cloned, so point this clone at the tracked ones.
+if [[ -d .githooks && "$(git config --get core.hooksPath || true)" != .githooks ]]; then
+  git config core.hooksPath .githooks
+  log "enabled the pre-push checks (git config core.hooksPath .githooks)"
+fi
 
 # ── 1. pull ─────────────────────────────────────────────────────────────────
 pull() {

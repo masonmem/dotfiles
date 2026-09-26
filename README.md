@@ -4,8 +4,8 @@ One repo for every machine I use: personal Macs, the work Mac, a QNAP NAS, and
 Linux dev containers. Configs are symlinked into `$HOME` with GNU Stow; one
 command keeps every machine in sync.
 
-📖 **Documentation: <https://masonmem.github.io/dotfiles/>** (source in
-[`docs/`](docs/index.md))
+📖 **Documentation:** run `dotfiles-docs` and open <http://127.0.0.1:8000>
+(the source is plain Markdown in [`docs/`](docs/index.md), readable right here too).
 
 ## Quick start
 
@@ -48,8 +48,8 @@ your files, upgrades or uninstalls anything.
 | Commands, aliases, key bindings | [Reference](docs/reference/index.md) |
 | Something broke | [Troubleshooting](docs/troubleshooting.md) |
 
-Run `tests/run` before pushing; CI runs it too, on Linux and on macOS with
-Apple's bash 3.2.
+Checks run locally: a pre-push hook runs `tests/run --offline` before every
+push (no hosted CI; `git push --no-verify` skips it once).
 
 ## Machines
 

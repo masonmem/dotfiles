@@ -54,9 +54,8 @@ sequenceDiagram
   participant G as GitHub
   participant B as solaris / work Mac / hyperion
   A->>A: edit ~/.zshrc (it's the repo file)
-  A->>A: tests/run
-  A->>G: git commit && git push
-  Note over G: CI runs the same tests
+  A->>A: git commit
+  A->>G: git push (the pre-push hook runs tests/run first)
   B->>G: sync-all (fetch + fast-forward)
   B->>B: install missing tools, relink, prune
 ```

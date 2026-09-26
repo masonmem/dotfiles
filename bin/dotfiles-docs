@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# dotfiles-docs — browse this repo's documentation site locally. No hosting
+# service involved: the site is built from docs/ with the versions pinned in
+# docs/requirements.txt.
+#
+#   dotfiles-docs              serve with live reload at http://127.0.0.1:8000
+#   dotfiles-docs build <dir>  write the static site to <dir> (to host it yourself)
+set -euo pipefail
+cd "${DOTFILES:-$HOME/dotfiles}"
+# Material 9.7 prints a long MkDocs 2.0 banner on every run; the pins avoid 2.0.
+export NO_MKDOCS_2_WARNING=1
+
+# Prefer uvx (in the Brewfile): a throwaway env with exactly the pinned versions.
+if command -v uvx >/dev/null 2>&1; then
+  mkdocs=(uvx --with-requirements docs/requirements.txt mkdocs)
+elif command -v mkdocs >/dev/null 2>&1; then
+  mkdocs=(mkdocs)
+else
+  echo "dotfiles-docs: needs uv (brew install uv) or: pip install -r docs/requirements.txt" >&2
+  exit 1
+fi
+
+case "${1:-serve}" in
+  serve) exec "${mkdocs[@]}" serve "${@:2}" ;;
+  build) exec "${mkdocs[@]}" build --strict --site-dir "${2:?usage: dotfiles-docs build <dir>}" ;;
+  -h|--help) sed -n '2,/^set -e/{/^set -e/d;s/^# \{0,1\}//;p;}' "$0" ;;
+  *) echo "usage: dotfiles-docs [serve|build <dir>]" >&2; exit 2 ;;
+esac

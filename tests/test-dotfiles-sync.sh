@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Integration test for install.sh + bin/dotfiles-sync in a throwaway $HOME
 # with a throwaway "origin". Offline: brew, pipx and hostname are shims and
-# bootstrap-shell gets an empty manifest. Needs git and GNU stow.
+# bootstrap-shell gets an empty manifest. Needs git; the stow suite and the
+# stow/built-in parity check also need GNU stow (skipped without it).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -95,6 +96,7 @@ run_suite() {   # <label> <PATH>
   check "work: no personal Brewfile"               bash -c "! grep -q 'personal/Brewfile\|ollama/Brewfile' '$SHIM_LOG'"
   check "work: no pipx installs"                   bash -c "! grep -q '^pipx' '$SHIM_LOG'"
   check "work: reports unselected packages"        grep -q "not enabled on this host: .*personal" "$HOME/install.out"
+  check "work: pre-push hook enabled"              test "$(git -C "$HOME/dotfiles" config --get core.hooksPath)" = .githooks
 
   new_home "$label-personal"
   "$HOME/dotfiles/install.sh" personal > "$HOME/install.out" 2>&1 || { fail "install.sh personal"; cat "$HOME/install.out"; }
@@ -148,14 +150,20 @@ run_suite() {   # <label> <PATH>
   check "foreign symlink: left pointing elsewhere" test "$(readlink "$HOME/.tmux.conf")" = "$WORK/elsewhere-$label"
 }
 
-run_suite stow   "$BASE_PATH"
+if command -v stow >/dev/null 2>&1; then
+  run_suite stow "$BASE_PATH"
+else
+  echo "── stow suite skipped (stow not installed)"
+fi
 run_suite nostow "$NOSTOW_PATH"
 
-echo "── parity"
-if diff "$WORK/links-stow" "$WORK/links-nostow" > "$WORK/links.diff"; then
-  pass "built-in linker creates exactly the links stow does"
-else
-  fail "linker parity:"; cat "$WORK/links.diff"
+if [[ -f "$WORK/links-stow" ]]; then
+  echo "── parity"
+  if diff "$WORK/links-stow" "$WORK/links-nostow" > "$WORK/links.diff"; then
+    pass "built-in linker creates exactly the links stow does"
+  else
+    fail "linker parity:"; cat "$WORK/links.diff"
+  fi
 fi
 
 if (( fails )); then echo "dotfiles-sync: $fails check(s) failed"; exit 1; fi

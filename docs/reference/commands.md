@@ -119,6 +119,16 @@ and arm64). Tools already on PATH are skipped. `TOOL_CACHE` (default
 `/var/cache/devcontainer-tools`) caches downloads. The exit status is non-zero
 if any tool failed; the others are still installed.
 
+## `dotfiles-docs`
+
+```text
+dotfiles-docs                serve this site with live reload at http://127.0.0.1:8000
+dotfiles-docs build <dir>    write the static site to <dir>
+```
+
+Uses `uvx` with the versions pinned in `docs/requirements.txt`, or an installed
+`mkdocs` if there's no `uv`. Nothing is hosted.
+
 ## `tests/run`
 
 ```text
@@ -127,7 +137,9 @@ tests/run [--offline]
 
 Runs every check: shellcheck, `zsh -n`, the unit tests, the sync integration
 test, and the shell-startup test. `--offline` skips the startup test, which
-clones the shell framework from GitHub. See [Contributing](../contributing.md).
+clones the shell framework from GitHub. Checks whose tools are missing are
+skipped with a note. The pre-push hook runs `tests/run --offline` before every
+push. See [Contributing](../contributing.md).
 
 ## From the `ollama` package
 

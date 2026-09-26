@@ -1,8 +1,7 @@
-# Documentation site. Preview: `pip install -r docs/requirements.txt && mkdocs serve`
-# Published to GitHub Pages by .github/workflows/docs.yml on every push to main.
+# Documentation site, built locally (no hosting service): `dotfiles-docs`
+# serves it at http://127.0.0.1:8000; `dotfiles-docs build <dir>` writes it out.
 site_name: dotfiles
 site_description: One repo for every machine — how it works, how to use it, how to change it.
-site_url: https://masonmem.github.io/dotfiles/
 repo_url: https://github.com/masonmem/dotfiles
 repo_name: masonmem/dotfiles
 edit_uri: edit/main/docs/

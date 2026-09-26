@@ -18,28 +18,33 @@ tests/run --offline   # skip the shell-startup test (it clones from GitHub)
 | `test-dotfiles-sync.py` | Homebrew output stays visible |
 | `test-zsh-aliases.zsh` | containers keep native `ls` |
 | `test-dotfiles-sync.sh` | `install.sh` + `dotfiles-sync` in a throwaway `$HOME`: profiles, work isolation, conflicts, pulls, deletions, dirty trees, stow/no-stow **parity** |
-| `test-shell-startup.sh` | real interactive, login and non-interactive shells start with **no error output** and the right PATH |
+| `test-shell-startup.sh` | real interactive, login and non-interactive shells start with **no error output** and the right PATH (not run by the hook: it clones from GitHub) |
+| docs build | `mkdocs build --strict`: broken links, missing includes, pages missing from the nav |
 
-It needs `git`, `zsh`, `stow`, `shellcheck` and `python3`.
+It needs `git`, `zsh`, `stow`, `shellcheck`, `python3` and `uv`; all are in the Brewfile. Missing tools make their checks skip, not fail.
 
-## CI
+## The pre-push hook (no hosted CI)
 
-`.github/workflows/ci.yml` runs `tests/run` on every push and pull request:
+Nothing here depends on a CI service. `.githooks/pre-push` runs
+`tests/run --offline` before every `git push` and blocks the push if a check
+fails. `dotfiles-sync` enables it on every clone
+(`git config core.hooksPath .githooks`), so every machine you push from is
+covered.
 
-- **Linux** (Ubuntu), the full suite;
-- **macOS**, with Apple's `/bin/bash` 3.2 first on PATH and BSD userland, as
-  on the real Macs.
-
-`.github/workflows/docs.yml` builds this site with `mkdocs build --strict` on
-every push (broken links and missing includes fail the build), and publishes
-it to GitHub Pages from `main`.
+- Skip it once, deliberately: `git push --no-verify`.
+- On a Mac the hook runs under Apple's `/bin/bash` 3.2, so the bash 3.2 rule
+  below is checked for real every time you push from a Mac.
+- On a minimal host (hyperion), checks whose tools aren't installed are
+  skipped with a note instead of failing.
+- The docs build is part of it: `mkdocs build --strict` through `uvx`, with the
+  pinned versions.
 
 ## Rules for scripts
 
 - **bash 3.2 compatible.** `#!/usr/bin/env bash` finds Apple's bash 3.2 on the
   Macs, because the Brewfile doesn't install a newer one. So: no associative
   arrays, no `mapfile`, no `${var,,}`, and never expand an empty array under
-  `set -u`. CI runs 3.2.
+  `set -u`. Pushing from a Mac runs the checks under 3.2.
 - **BSD and GNU tools.** No `sed -i`, `readlink -f`, `stat -c` (without a
   `stat -f` fallback), or `grep -P`.
 - **Don't abort on the non-essential.** A failed brew or pipx install, or the
@@ -57,13 +62,16 @@ it to GitHub Pages from `main`.
 
 ## Docs
 
-This site lives in `docs/` with `mkdocs.yml` at the repo root.
+This site lives in `docs/` with `mkdocs.yml` at the repo root. It isn't
+hosted anywhere; you build it locally:
 
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r docs/requirements.txt
-mkdocs serve            # http://127.0.0.1:8000, live reload
+dotfiles-docs                  # http://127.0.0.1:8000, live reload
+dotfiles-docs build /tmp/site  # a static copy, if you want to host it yourself
 ```
+
+`dotfiles-docs` uses `uvx` (from the Brewfile) with the versions pinned in
+`docs/requirements.txt`, so nothing is installed globally.
 
 - Reference pages embed real files with `--8<-- "path"` (or a named section,
   `--8<-- "file:name"`, between `# --8<-- [start:name]` / `[end:name]` markers),

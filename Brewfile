@@ -15,6 +15,7 @@ brew "fzf"                                 # fuzzy finder
 brew "htop"                                # interactive process viewer
 brew "jq"                                  # JSON processor
 brew "ripgrep"                             # modern grep replacement
+brew "shellcheck"                          # shell linter (tests/run, the pre-push hook)
 brew "tealdeer"                            # fast tldr client (`tldr`)
 brew "tree"                                # directory tree viewer
 brew "watch"                               # run command periodically

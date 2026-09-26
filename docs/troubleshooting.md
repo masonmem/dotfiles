@@ -24,6 +24,10 @@ and why.
     You made that symlink yourself (built-in linker only; stow reports it as a
     conflict). Remove it if the repo should own that path.
 
+??? failure "`git push` is refused after `[pre-push] tests/run --offline`"
+    A check failed; the output above says which one. Fix it, commit, and push
+    again. To push anyway, once and on purpose: `git push --no-verify`.
+
 ??? warning "`uncommitted changes … skipping pull`"
     Expected when you have local edits. Everything except the pull still ran.
     Commit and push them, or `git stash`, then sync again.
