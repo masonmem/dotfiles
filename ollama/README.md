@@ -1,8 +1,9 @@
 # ollama (dotfiles package)
 
-The local-LLM agent stack for **personal** machines. Opt-in: it is in the
-`personal` profile of `install.sh` and never on the work machine (don't add it
-there unless your employer has cleared local-LLM tooling).
+The local-LLM agent stack for **personal** machines: `stow ollama` there, never
+on the work machine (unless your employer has cleared local-LLM tooling). The
+agents themselves (aider, opencode, goose) are in
+`Brewfile.d/personal.Brewfile`.
 
 What it links into `$HOME`:
 
@@ -16,8 +17,6 @@ What it links into `$HOME`:
 
 What it does **not** link (see `.stow-local-ignore`):
 
-- `Brewfile` — aider, opencode, goose. `dotfiles-sync` installs it on hosts
-  that enable this package.
 - `bin/install-ollama.sh`, `launchagents/` — the Ollama server itself, used on
   **solaris** only; see [launchagents/README.md](launchagents/README.md).
 

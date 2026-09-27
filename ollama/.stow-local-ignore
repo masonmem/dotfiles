@@ -2,6 +2,5 @@
 # (This file replaces stow's built-in ignore list for the package.)
 \.DS_Store
 ^/README\.md
-^/Brewfile
 ^/launchagents
 ^/bin/install-ollama\.sh

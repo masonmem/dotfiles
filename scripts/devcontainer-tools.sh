@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Install the shell's CLI tools inside a Linux dev container (x86_64/arm64)
-# from upstream release binaries into /usr/local. Run by 05-devcontainer.zsh
-# on first shell; idempotent. Each tool installs independently — one failure
-# doesn't block the rest — and the exit status is non-zero if any failed.
+# Optional: install the shell's CLI tools inside a Linux dev container
+# (x86_64/arm64) from upstream release binaries into /usr/local. The shell
+# config works without them. Run it as root, e.g. from the container's
+# postCreateCommand; tools already on PATH are skipped. Each tool installs
+# independently, and the exit status is non-zero if any failed.
 #
 # If TOOL_CACHE (default /var/cache/devcontainer-tools) is writable, e.g. a
 # named volume, binaries are cached there for fast reinstalls.

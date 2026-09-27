@@ -1,6 +1,7 @@
 # Shared git config for every machine. Identity and anything machine- or
-# employer-specific go in ~/.gitconfig.local (untracked; see
-# templates/gitconfig.local), included at the END so it overrides this file.
+# employer-specific go in ~/.gitconfig.local (untracked; see README), included
+# at the END so it overrides this file. Never `git config --global`: that
+# writes into this tracked file. Use `git config --file ~/.gitconfig.local`.
 
 [core]
     pager = delta

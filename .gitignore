@@ -1,5 +1,2 @@
 .DS_Store
 .gitconfig.local
-__pycache__/
-site/
-.venv/

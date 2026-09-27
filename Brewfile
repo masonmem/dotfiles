@@ -1,7 +1,8 @@
-# Brewfile — shared by EVERY Mac, including the work machine. Keep it to
-# general tooling. Personal-only software goes in a package Brewfile
-# (personal/Brewfile, ollama/Brewfile) and single-host software in
-# Brewfile.d/<host>.Brewfile; dotfiles-sync installs all that apply.
+# Brewfile — every Mac, including the work machine. Keep it to general tooling.
+# Personal-only software: Brewfile.d/personal.Brewfile. One machine only:
+# Brewfile.d/<host>.Brewfile.
+#
+#   brew bundle --file ~/dotfiles/Brewfile
 
 tap "jesseduffield/lazygit", trusted: { formula: "lazygit" }
 
@@ -15,7 +16,6 @@ brew "fzf"                                 # fuzzy finder
 brew "htop"                                # interactive process viewer
 brew "jq"                                  # JSON processor
 brew "ripgrep"                             # modern grep replacement
-brew "shellcheck"                          # shell linter (tests/run, the pre-push hook)
 brew "tealdeer"                            # fast tldr client (`tldr`)
 brew "tree"                                # directory tree viewer
 brew "watch"                               # run command periodically
@@ -28,9 +28,8 @@ brew "stow"                                # symlink farm manager (dotfiles)
 brew "tmux"                                # terminal multiplexer
 brew "zoxide"                              # smarter cd replacement
 brew "zsh"                                 # latest zsh (over macOS system zsh)
-# oh-my-zsh, powerlevel10k, zsh-autosuggestions, zsh-syntax-highlighting are
-# NOT brew-managed — bin/bootstrap-shell git-clones them into ~/.oh-my-zsh/,
-# which is the layout .zshrc actually loads from.
+# oh-my-zsh and its theme/plugins are git clones (see README), not brews: the
+# same ~/.oh-my-zsh then works on the QNAP and mounted into dev containers.
 
 # ── Git ──────────────────────────────────────────────────────────────────────
 brew "git"
@@ -51,7 +50,7 @@ brew "node"                                # Default node — keeps /opt/homebre
                                            # so launchd / opencode MCP subprocesses / cron find
                                            # node without sourcing nvm. nvm still wins when active.
 brew "nvm"                                 # Node version manager (per-project pins)
-brew "pipx"                                # isolated Python CLIs (lists: <package>/pipx-tools.txt)
+brew "pipx"                                # isolated Python CLIs
 brew "pnpm"                                # fast Node package manager
 brew "python@3.14"                         # Python
 brew "yarn"                                # Node package manager
@@ -67,7 +66,7 @@ brew "iperf3"                              # network bandwidth testing
 brew "qrencode"                            # QR code generator
 
 # ── AI tooling ───────────────────────────────────────────────────────────────
-# The local-LLM agent stack (aider, opencode, goose) is in ollama/Brewfile.
+# The local-LLM agent stack (aider, opencode, goose) is in Brewfile.d/personal.Brewfile.
 brew "uv"                                  # Python pkg/runtime mgr; provides `uvx` for MCP servers
 
 # ── Applications ─────────────────────────────────────────────────────────────

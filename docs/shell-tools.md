@@ -65,7 +65,7 @@ zoxide replaces `cd` transparently. It learns which directories you visit and ra
 cd foo            # works normally for relative/absolute paths
 cd proj           # jumps to highest-ranked directory matching "proj"
 cd da so          # matches ~/code/viya-data-sources (multiple terms = AND)
-zi                # interactive picker (fzf-powered)
+cdi               # interactive picker (fzf-powered)
 cd -              # go back to previous directory (still works)
 ```
 

@@ -8,8 +8,8 @@
 
 typeset -U path PATH        # dedupe; re-prepending an entry moves it to the front
 path=(
-  $HOME/bin                                  # per-host scripts; QNAP's ~/bin/mkfifo (gitstatus needs it)
-  $HOME/dotfiles/bin                         # sync-all, dotfiles-sync, dexec, …
+  $HOME/bin                                  # this machine's scripts; ollama's litellm-keys
+  $HOME/dotfiles/bin                         # dexec, configure-vscode-ai
   ${AI_CONFIG:-$HOME/code/ai-sync}/bin       # ai-sync commands (secrets-push, MCP wrappers, …)
   $HOME/.cargo/bin                           # rustup, when installed
   /opt/homebrew/bin /opt/homebrew/sbin       # Homebrew (Apple Silicon)
