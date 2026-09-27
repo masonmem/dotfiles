@@ -17,12 +17,13 @@ The config is plain Lua. It sets sensible defaults and bootstraps [lazy.nvim](ht
 | Plugin            | What it does                                                |
 | ----------------- | ----------------------------------------------------------- |
 | `catppuccin`      | Colorscheme — matches tmux and bat                          |
-| `nvim-treesitter` | Better syntax highlighting for many languages               |
+| `nvim-treesitter` | Installs Treesitter parsers; Neovim highlights with them. Needs Neovim 0.12+ and `tree-sitter` CLI (in the Brewfile); skipped on older Neovim |
 | `telescope.nvim`  | Fuzzy file/text finder (uses `fd` + `ripgrep`)              |
 | `lualine.nvim`    | Nice status line at the bottom                              |
 | `which-key.nvim`  | Shows available keybindings when you pause after `<leader>` |
 | `nvim-autopairs`  | Auto-closes `(`, `[`, `"`, etc.                             |
-| `Comment.nvim`    | Toggle comments with `gcc` (line) or `gc` (visual)          |
+
+Commenting (`gcc`, `gc`) is built into Neovim 0.10+, so no plugin is needed.
 
 ---
 
@@ -156,7 +157,7 @@ ca"         change around quotes (includes the quotes)
 - **`nvim-cmp`** — completion menu that LSP feeds into.
 - These aren't included in the current config — add them when needed.
 
-Run `:Lazy` inside nvim to manage plugins. Run `:TSUpdate` to update Treesitter parsers.
+Run `:Lazy` inside nvim to manage plugins. Run `:TSUpdate` to update Treesitter parsers. Plugin versions are recorded in `~/.config/nvim/lazy-lock.json` on each machine (not tracked).
 
 ---
 

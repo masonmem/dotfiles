@@ -1,36 +1,31 @@
-# ~/bin needs to be on PATH BEFORE .zshrc runs — p10k's instant-prompt
-# cache spawns gitstatus which may need binaries from there (e.g. mkfifo
-# on hosts whose system busybox lacks it). 00-path.zsh re-adds it later
-# but by then the instant-prompt cache has already failed.
-[[ -d "$HOME/bin" ]] && export PATH="$HOME/bin:$PATH"
+# ~/.zshenv — read by EVERY zsh (interactive, login, `ssh host cmd`, scripts,
+# launchd jobs, agent subprocesses). Keep it to environment only: no output,
+# no aliases, nothing slow.
+#
+# This is the single place PATH is defined. .zprofile re-sources this file for
+# login shells because macOS /etc/zprofile (path_helper) runs after .zshenv
+# and pushes the system directories back in front of ours.
 
-# Entware (QNAP / OpenWrt-style hosts) needs to be on PATH for
-# non-interactive zsh too (e.g. `ssh hyperion nvim ...`, scripts), not
-# only via 00-path.zsh which is .zshrc-only. Guarded so Mac hosts skip.
-for _d in /opt/bin /opt/sbin /opt/usr/bin /opt/usr/sbin; do
-  [[ -d "$_d" ]] && export PATH="$_d:$PATH"
-done
-unset _d
+typeset -U path PATH        # dedupe; re-prepending an entry moves it to the front
+path=(
+  $HOME/bin                                  # this machine's scripts; ollama's litellm-keys
+  $HOME/dotfiles/bin                         # dexec, configure-vscode-ai
+  ${AI_CONFIG:-$HOME/code/ai-sync}/bin       # ai-sync commands (secrets-push, MCP wrappers, …)
+  $HOME/.cargo/bin                           # rustup, when installed
+  /opt/homebrew/bin /opt/homebrew/sbin       # Homebrew (Apple Silicon)
+  /opt/bin /opt/sbin /opt/usr/bin /opt/usr/sbin    # Entware (QNAP)
+  /share/CACHEDEV3_DATA/.qpkg/container-station/bin  # QNAP Container Station docker
+  $path
+  $HOME/.local/bin                           # pipx / uv tools (after system dirs, as before)
+)
+path=($^path(N-/))          # drop directories that don't exist on this host
 
-# Container Station docker on QNAP — same rationale as Entware above.
-[[ -d /share/CACHEDEV3_DATA/.qpkg/container-station/bin ]] \
-  && export PATH="/share/CACHEDEV3_DATA/.qpkg/container-station/bin:$PATH"
+# XDG base dirs (the defaults, made explicit). On macOS some tools — lazygit
+# among them — only read ~/.config when XDG_CONFIG_HOME is set.
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_DATA_HOME="$HOME/.local/share"
 
-# Homebrew + ~/.ai-config/bin for non-interactive shells (ssh commands,
-# launchd, MCP subprocesses). Interactive shells get these again via
-# .zprofile/00-path.zsh, but `ssh host ai-sync` must work too — and
-# `#!/usr/bin/env python3` shebangs must resolve to Homebrew Python
-# (3.11+), not the CommandLineTools 3.9.
-[[ -d /opt/homebrew/bin ]] && export PATH="/opt/homebrew/bin:$PATH"
-[[ -d "$HOME/dotfiles/bin" ]] && export PATH="$HOME/dotfiles/bin:$PATH"
-[[ -d "$HOME/.ai-config/bin" ]] && export PATH="$HOME/.ai-config/bin:$PATH"
-
-# Cargo env (only on hosts where rustup has been installed)
-[[ -r "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
-
-# Silence zoxide's chpwd-hook ordering warning. It fires whenever zoxide
-# runs after another plugin (p10k/gitstatus) has registered its own
-# chpwd hooks — the doctor wants zoxide initialized last, but reordering
-# is brittle because plugin load order drifts. This is the documented
-# opt-out; the warning is benign.
+# zoxide warns when it isn't the last chpwd hook; plugin order makes that
+# brittle and the warning is benign.
 export _ZO_DOCTOR=0

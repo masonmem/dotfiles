@@ -1,5 +1,10 @@
+# Brewfile — every Mac, including the work machine. Keep it to general tooling.
+# Personal-only software: Brewfile.d/personal.Brewfile. One machine only:
+# Brewfile.d/<host>.Brewfile.
+#
+#   brew bundle --file ~/dotfiles/Brewfile
+
 tap "jesseduffield/lazygit", trusted: { formula: "lazygit" }
-tap "anomalyco/tap", trusted: { formula: "opencode" }
 
 # ── Core CLI tools ───────────────────────────────────────────────────────────
 brew "bat"                                 # cat with syntax highlighting
@@ -11,7 +16,7 @@ brew "fzf"                                 # fuzzy finder
 brew "htop"                                # interactive process viewer
 brew "jq"                                  # JSON processor
 brew "ripgrep"                             # modern grep replacement
-brew "tealdeer"                            # fast tldr client (aliased in 20-aliases.zsh)
+brew "tealdeer"                            # fast tldr client (`tldr`)
 brew "tree"                                # directory tree viewer
 brew "watch"                               # run command periodically
 brew "wget"                                # HTTP file retriever
@@ -23,9 +28,8 @@ brew "stow"                                # symlink farm manager (dotfiles)
 brew "tmux"                                # terminal multiplexer
 brew "zoxide"                              # smarter cd replacement
 brew "zsh"                                 # latest zsh (over macOS system zsh)
-# oh-my-zsh, powerlevel10k, zsh-autosuggestions, zsh-syntax-highlighting are
-# NOT brew-managed — bin/bootstrap-shell git-clones them into ~/.oh-my-zsh/,
-# which is the layout .zshrc actually loads from.
+# oh-my-zsh and its theme/plugins are git clones (see README), not brews: the
+# same ~/.oh-my-zsh then works on the QNAP and mounted into dev containers.
 
 # ── Git ──────────────────────────────────────────────────────────────────────
 brew "git"
@@ -37,6 +41,7 @@ brew "lazydocker"                          # terminal UI for docker (k9s-like)
 
 # ── Editors ──────────────────────────────────────────────────────────────────
 brew "neovim"                              # modern vim
+brew "tree-sitter-cli"                     # nvim-treesitter compiles parsers with it
 
 # ── Languages & runtimes ─────────────────────────────────────────────────────
 brew "go"                                  # Go programming language
@@ -45,7 +50,7 @@ brew "node"                                # Default node — keeps /opt/homebre
                                            # so launchd / opencode MCP subprocesses / cron find
                                            # node without sourcing nvm. nvm still wins when active.
 brew "nvm"                                 # Node version manager (per-project pins)
-brew "pipx"                                # install Python CLI tools in isolation (tool list: pipx-tools.txt)
+brew "pipx"                                # isolated Python CLIs
 brew "pnpm"                                # fast Node package manager
 brew "python@3.14"                         # Python
 brew "yarn"                                # Node package manager
@@ -56,25 +61,12 @@ brew "kubecolor"                           # colorized kubectl output
 brew "kubectx"                             # switch k8s contexts/namespaces
 brew "stern"                               # multi-pod log tailing
 
-# ── Media & networking ───────────────────────────────────────────────────────
-brew "ffmpeg"                              # video/audio processing
-brew "yt-dlp"                              # video downloader
+# ── Networking ───────────────────────────────────────────────────────────────
 brew "iperf3"                              # network bandwidth testing
 brew "qrencode"                            # QR code generator
 
-# ── Homelab GitOps (masonmem/homelab + Komodo) ───────────────────────────────
-brew "gitleaks"                            # secret-scanning, runs in homelab CI
-brew "sops"                                # encrypted secrets for solaris stacks
-brew "age"                                 # SOPS encryption backend (per-host + admin keys)
-
-# ── LLM / AI tooling ─────────────────────────────────────────────────────────
-# ollama: NOT installed via Homebrew — the formula bottle is broken (ships no
-# `llama-server` runner, every model load fails). Use the official standalone
-# build instead: `ollama/bin/install-ollama.sh` → ~/.local/ollama, managed by
-# the com.user.ollama LaunchAgent on solaris. See ollama/launchagents/README.md.
-brew "aider"                               # AI pair programming in the terminal
-brew "anomalyco/tap/opencode"              # terminal-native AI coding agent
-brew "block-goose-cli"                     # goose AI agent (block.xyz)
+# ── AI tooling ───────────────────────────────────────────────────────────────
+# The local-LLM agent stack (aider, opencode, goose) is in Brewfile.d/personal.Brewfile.
 brew "uv"                                  # Python pkg/runtime mgr; provides `uvx` for MCP servers
 
 # ── Applications ─────────────────────────────────────────────────────────────

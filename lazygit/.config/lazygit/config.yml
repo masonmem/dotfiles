@@ -2,12 +2,10 @@
 # Docs: https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
 
 gui:
-  # Show nerd font icons (requires Nerd Font — already needed for p10k)
+  # Nerd Font icons (the font p10k already needs)
   nerdFontsVersion: "3"
-  showIcons: true
   # Expand the focused side panel slightly for readability
   expandFocusedSidePanel: true
-  # Scroll speed
   mouseEvents: true
   theme:
     activeBorderColor:
@@ -38,21 +36,20 @@ gui:
 authorColors:
   '*': "#b7bdf8"
 git:
-  pagers:
-    - # Use delta for diffs inside lazygit — no paging (lazygit handles scrolling)
+  # `diffRenderers` is the lazygit ≥ 0.65 name (formerly `pagers`). Keep the
+  # current name: lazygit rewrites outdated keys in place, which would dirty
+  # this repo through the symlink.
+  diffRenderers:
+    - # delta for diffs inside lazygit — no paging (lazygit handles scrolling)
       colorArg: always
-      pager: delta --color-only --dark --paging=never --line-numbers
+      command: delta --color-only --dark --paging=never --line-numbers
   # Enables auto-fetching of remotes in background
   autoFetch: true
   autoRefresh: true
-  # Show branch ahead/behind counts
   branchLogCmd: "git log --graph --color=always --abbrev-commit --decorate --date=relative --pretty=medium {{branchName}} --"
 os:
-  # Open files in neovim from within lazygit
-  edit: "nvim {{filename}}"
-  editAtLine: "nvim +{{line}} {{filename}}"
-  editAtLineAndWait: "nvim +{{line}} {{filename}}"
-  open: "open {{link}}"
+  # `e` opens files in neovim. (open/openLink keep lazygit's per-OS defaults.)
+  editPreset: "nvim"
 keybinding:
   universal:
     # Quit with q or Ctrl-C (both feel natural)

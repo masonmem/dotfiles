@@ -1700,7 +1700,12 @@
   #   - verbose: Enable instant prompt and print a warning when detecting console output during
   #              zsh initialization. Choose this if you've never tried instant prompt, haven't
   #              seen the warning, or if you are unsure what this all means.
-  typeset -g POWERLEVEL9K_INSTANT_PROMPT=verbose
+  typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+
+  # gitstatus (the fast Git status above) needs job control. Where there is none (no
+  # terminal, as in `zsh -i -c` from a script; Entware's zsh on the QNAP) it fails with an
+  # error, so fall back to the slower built-in Git status.
+  [[ -o monitor ]] || typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
 
   # Hot reload allows you to change POWERLEVEL9K options after Powerlevel10k has been initialized.
   # For example, you can type POWERLEVEL9K_BACKGROUND=red and see your prompt turn red. Hot reload

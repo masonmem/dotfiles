@@ -86,7 +86,7 @@ Once inside tmux, everything goes through the prefix:
 | --------------------- | ------------------------------------- |
 | `<prefix> Enter`      | Enter copy mode                       |
 | `v`                   | Start selection (vi visual)           |
-| `y`                   | Copy selection → clipboard (`pbcopy`) |
+| `y`                   | Copy selection → clipboard (OSC 52, works over SSH; `pbcopy` on a Mac) |
 | `q` / `Esc`           | Exit copy mode                        |
 | `/`                   | Search forward                        |
 | `?`                   | Search backward                       |
@@ -162,4 +162,4 @@ tmux attach -t build    # pick up right where you left off
 
 ## Config location
 
-`~/.tmux.conf` — managed via chezmoi. To reload without restarting: `<prefix> r`.
+`~/.tmux.conf`, a symlink into `~/dotfiles/tmux/` (stow). To reload without restarting: `<prefix> r`.

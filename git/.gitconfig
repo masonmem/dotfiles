@@ -1,5 +1,7 @@
-[include]
-    path = ~/.gitconfig.local
+# Shared git config for every machine. Identity and anything machine- or
+# employer-specific go in ~/.gitconfig.local (untracked; see README), included
+# at the END so it overrides this file. Never `git config --global`: that
+# writes into this tracked file. Use `git config --file ~/.gitconfig.local`.
 
 [core]
     pager = delta
@@ -39,3 +41,7 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+
+# Must stay last: later values win, so the local file overrides everything above.
+[include]
+    path = ~/.gitconfig.local
