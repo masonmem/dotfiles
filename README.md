@@ -1,7 +1,8 @@
 # dotfiles
 
-Config for my Macs (navi, solaris, the work MacBook), the QNAP (hyperion) and
-dev containers, managed with [GNU Stow](https://www.gnu.org/software/stow/).
+Config for my Macs (navi, solaris), the QNAP (hyperion) and dev containers,
+managed with [GNU Stow](https://www.gnu.org/software/stow/). All of them are
+mine; the work laptop has its own, separate setup.
 
 Each top-level folder is a **package** laid out like `$HOME`. `stow zsh`, run
 from `~/dotfiles`, symlinks `zsh/.zshrc` to `~/.zshrc`, and so on. Edit a file
@@ -11,13 +12,11 @@ on any machine and you're editing the repo; commit and push it, then
 | Package | What | Where |
 |---|---|---|
 | `zsh` `git` `tmux` `nvim` `lazygit` `atuin` `p10k` | shell, prompt, git and editor config | every machine |
-| `personal` | personal aliases and env, the `GH_TOKEN` from ai-sync | personal Macs only |
-| `ollama` | local-LLM agents (aider, opencode, goose) and LiteLLM keys; see [ollama/README.md](ollama/README.md) | personal Macs only |
+| `ollama` | local-LLM agents (aider, opencode, goose) and LiteLLM keys; see [ollama/README.md](ollama/README.md) | the Macs |
 
 Also here:
 
-- `Brewfile`: every Mac. `Brewfile.d/personal.Brewfile`: personal Macs only.
-  `Brewfile.d/<host>.Brewfile`: a single machine.
+- `Brewfile`: every Mac. `Brewfile.d/<host>.Brewfile`: a single machine.
 - `bin/`: `dexec` (a shell in a running dev container) and
   `configure-vscode-ai` (VS Code AI settings). On PATH everywhere.
 - `scripts/devcontainer-tools.sh`: optional CLI tools for dev containers.
@@ -27,9 +26,8 @@ Also here:
 - `.stowrc`: makes `stow` link files one at a time, so files other tools create
   in `~/.config/<tool>/` never land in this repo.
 
-Work stays separate by what you *don't* stow and install: the work Mac never
-gets `personal`, `ollama` or the personal Brewfile. Anything specific to one
-machine lives in untracked files on that machine (below).
+Anything specific to one machine lives in untracked files on that machine
+(below).
 
 ## Set up a Mac
 
@@ -42,12 +40,10 @@ cd ~/dotfiles
 
 # Tools
 brew bundle --file Brewfile
-brew bundle --file Brewfile.d/personal.Brewfile      # personal Macs only
 brew bundle --file Brewfile.d/solaris.Brewfile       # if this machine has one
 
 # Link the config (move aside any existing ~/.zshrc etc. first)
-stow zsh git tmux nvim lazygit atuin p10k
-stow personal ollama                                 # personal Macs only
+stow zsh git tmux nvim lazygit atuin p10k ollama
 
 # oh-my-zsh, then the theme and plugins, each installed the way its README says
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
@@ -61,7 +57,7 @@ git clone https://github.com/zsh-users/zsh-completions            $ZSH_CUSTOM/pl
 Then create the machine-only files (next section), set your terminal's font to
 *MesloLGS Nerd Font*, and open a new terminal.
 
-On personal Macs, also:
+Also, on the Macs:
 
 ```bash
 git clone git@github.com:masonmem/ai-sync.git ~/code/ai-sync && ~/code/ai-sync/install.sh
@@ -70,30 +66,19 @@ pipx install py-natpmp
 pipx install git+https://github.com/rgarcia/ynab-mcp-server@cd78abc89e941d7e2d5b28029886dfe3e3c215e2
 ```
 
-On the work Mac, ai-sync's work-safe layer is `~/code/ai-sync/install.sh --work`.
-
 ## Machine-only files (untracked)
 
 | File | For |
 |---|---|
-| `~/.gitconfig.local` | git identity and anything work-specific. Loaded last, so it wins. |
+| `~/.gitconfig.local` | git identity, and anything else you don't want in a public repo. Loaded last, so it wins. |
 | `~/.config/zsh/local.zsh` | this machine's aliases, env, `PATH` additions |
 | `~/.ssh/config` | SSH hosts |
 
 ```ini
-# ~/.gitconfig.local — work Mac
+# ~/.gitconfig.local
 [user]
     name = Your Name
-    email = you@company.example
-```
-
-```ini
-# ~/.gitconfig.local — personal Mac, with work repos under ~/work
-[user]
-    name = Your Name
-    email = you@personal.example
-[includeIf "gitdir:~/work/"]
-    path = ~/.gitconfig.work
+    email = you@example.com
 ```
 
 Don't run `git config --global` or `p10k configure`: `~/.gitconfig` and
@@ -104,7 +89,7 @@ every machine. Use `git config --file ~/.gitconfig.local …`.
 
 ```bash
 cd ~/dotfiles && git pull
-stow -R zsh git tmux nvim lazygit atuin p10k   # only if files were added or removed (-R also drops links to deleted files)
+stow -R zsh git tmux nvim lazygit atuin p10k ollama   # only if files were added or removed (-R also drops links to deleted files)
 brew bundle --file Brewfile                    # only if a Brewfile changed
 zsh-update                                     # theme and plugins; oh-my-zsh also updates itself every two weeks
 ```
@@ -122,8 +107,8 @@ zsh-update                                     # theme and plugins; oh-my-zsh al
 - **Add a package:** make a folder laid out like `~`, then `stow <name>`.
   To keep a file in it from being linked, list it in a `.stow-local-ignore`
   in the package (see `ollama/`).
-- **Is it OK on the work Mac, and in a public repo?** If not, it goes in
-  `personal`, `ollama` or a machine-only file.
+- **Is it OK in a public repo?** Names, addresses and tokens aren't. They go
+  in a machine-only file.
 
 ## hyperion (QNAP)
 

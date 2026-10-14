@@ -1,10 +1,10 @@
-# Brewfile — every Mac, including the work machine. Keep it to general tooling.
-# Personal-only software: Brewfile.d/personal.Brewfile. One machine only:
+# Brewfile — every Mac. Software for one machine only goes in
 # Brewfile.d/<host>.Brewfile.
 #
 #   brew bundle --file ~/dotfiles/Brewfile
 
 tap "jesseduffield/lazygit", trusted: { formula: "lazygit" }
+tap "anomalyco/tap", trusted: { formula: "opencode" }
 
 # ── Core CLI tools ───────────────────────────────────────────────────────────
 brew "bat"                                 # cat with syntax highlighting
@@ -65,9 +65,24 @@ brew "stern"                               # multi-pod log tailing
 brew "iperf3"                              # network bandwidth testing
 brew "qrencode"                            # QR code generator
 
+# ── Homelab GitOps (masonmem/homelab + Komodo) ───────────────────────────────
+brew "gitleaks"                            # secret scanning, runs in homelab CI
+brew "sops"                                # encrypted secrets for solaris stacks
+brew "age"                                 # SOPS encryption backend
+
+# ── Media ────────────────────────────────────────────────────────────────────
+brew "yt-dlp"                              # video downloader (aliases in .zshrc)
+brew "ffmpeg"                              # yt-dlp remuxing; general A/V work
+
 # ── AI tooling ───────────────────────────────────────────────────────────────
-# The local-LLM agent stack (aider, opencode, goose) is in Brewfile.d/personal.Brewfile.
 brew "uv"                                  # Python pkg/runtime mgr; provides `uvx` for MCP servers
+# Local-LLM agents; their configs are the `ollama` package. Ollama itself is
+# NOT installed via Homebrew — the formula bottle ships no `llama-server`
+# runner, so every model load fails. solaris runs the official build instead:
+# ollama/bin/install-ollama.sh + ollama/launchagents/.
+brew "aider"                               # diff-driven pair programming (60-aider-wrapper.zsh)
+brew "anomalyco/tap/opencode"              # terminal AI coding agent (.config/opencode)
+brew "block-goose-cli"                     # goose agent (61-goose-wrapper.zsh, .config/goose)
 
 # ── Applications ─────────────────────────────────────────────────────────────
 cask "claude-code@latest"                  # Anthropic's terminal-based AI coding agent (@latest tracks releases faster)

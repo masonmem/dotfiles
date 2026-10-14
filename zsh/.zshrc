@@ -5,8 +5,8 @@
 # missing tool means a missing alias, never an error.
 #
 # Every ~/.config/zsh/*.zsh is loaded at the end: tracked files from the
-# optional packages (personal, ollama), and untracked ones you add on a single
-# machine (e.g. ~/.config/zsh/local.zsh).
+# ollama package, and untracked ones you add on a single machine (e.g.
+# ~/.config/zsh/local.zsh).
 
 # Powerlevel10k instant prompt. Keep near the top; anything that may need
 # console input goes above this block.
@@ -145,6 +145,32 @@ if [[ -s /opt/homebrew/opt/nvm/nvm.sh ]]; then
     eval "$_cmd() { unfunction nvm node npm npx yarn pnpm; source /opt/homebrew/opt/nvm/nvm.sh; $_cmd \"\$@\"; }"
   done
   unset _cmd
+fi
+
+# GitHub CLI: authenticate with the fine-grained PAT kept in ai-sync's secrets.
+# GH_TOKEN takes precedence over `gh auth login`.
+_gh_pat="${AI_CONFIG:-$HOME/code/ai-sync}/secrets/github-mcp-pat.txt"
+[[ -z "${GH_TOKEN:-}" && -r "$_gh_pat" ]] && export GH_TOKEN="$(<"$_gh_pat")"
+unset _gh_pat
+
+# Copilot CLI → the OpenTelemetry collector on localhost:4318. WARNING: this
+# captures prompts, responses, code and tool output, and the OTEL_* names are
+# generic, so any OpenTelemetry-instrumented program sees them.
+if (( $+commands[copilot] )); then
+  export COPILOT_OTEL_ENABLED=true
+  export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+  export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true
+fi
+
+# Media
+if (( $+commands[yt-dlp] )); then
+  alias youtube-dl='yt-dlp --remux-video mp4'
+  alias ytdl='yt-dlp --remux-video mp4 --force-generic-extractor'
+fi
+
+# WireGuard NAT-PMP port forwarding (natpmp-client.py: `pipx install py-natpmp`)
+if (( $+commands[natpmp-client.py] )); then
+  alias pf='while true; do date && natpmp-client.py -g 10.2.0.1 -u -l 60 0 0 && natpmp-client.py -g 10.2.0.1 -l 60 0 0 | grep port || { echo -e "ERROR with natpmpc command \a"; break; }; sleep 45; done'
 fi
 
 # ── Prompt, then per-package and per-machine files ───────────────────────────

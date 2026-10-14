@@ -1,9 +1,7 @@
 # ollama (dotfiles package)
 
-The local-LLM agent stack for **personal** machines: `stow ollama` there, never
-on the work machine (unless your employer has cleared local-LLM tooling). The
-agents themselves (aider, opencode, goose) are in
-`Brewfile.d/personal.Brewfile`.
+The local-LLM agent stack: `stow ollama` on the Macs. The agents themselves
+(aider, opencode, goose) are in the root `Brewfile`.
 
 What it links into `$HOME`:
 
