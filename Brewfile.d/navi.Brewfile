@@ -1,7 +1,5 @@
-# Brewfile.d/navi.Brewfile — personal laptop extras.
+# Brewfile.d/navi.Brewfile — navi (personal laptop) only.
 #
-# Installed by dotfiles-sync IN ADDITION to the shared Brewfile when
-# `hostname -s` (lowercased) is "navi". Keep software that is inappropriate
-# for the work machine here.
+#   brew bundle --file ~/dotfiles/Brewfile.d/navi.Brewfile
 
 cask "handy"                               # local, offline speech-to-text

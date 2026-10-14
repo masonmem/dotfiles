@@ -13,7 +13,7 @@ The shell environment replaces several standard Unix tools with modern alternati
 | `find`           | **fd**        | Faster, saner defaults, respects .gitignore  |
 | `grep`           | **ripgrep**   | Faster, respects .gitignore, better UX       |
 | `cd`             | **zoxide**    | Learns directories, fuzzy matching           |
-| `Ctrl-R`         | **atuin**     | Searchable history database, cross-machine sync |
+| `Ctrl-R` / `↑`   | **atuin**     | Searchable history database, cross-machine sync |
 | `Ctrl-T`         | **fzf**       | Fuzzy file/dir picker                        |
 | `git diff`       | **delta**     | Syntax-highlighted diffs, line numbers       |
 
@@ -42,18 +42,18 @@ kill -9 $(ps aux | fzf | awk '{print $2}')   # kill a process
 
 ## atuin — shell history
 
-atuin replaces the default `Ctrl-R` history search with a full-text searchable database. History is stored in SQLite and can optionally sync across machines.
+atuin replaces the default `Ctrl-R` history search (and the `↑` key) with a full-text searchable database. History is stored in SQLite and can optionally sync across machines.
 
 ```bash
-Ctrl-R          # open atuin search (interactive)
+Ctrl-R / ↑      # open atuin search (interactive)
 atuin search <query>   # CLI search
 atuin stats            # usage statistics
 ```
 
-Key settings (in `~/.config/atuin/config.toml`):
-- **search_mode** — `fuzzy` by default (also supports `prefix`, `fulltext`, `skim`)
-- **filter_mode** — `global` shows all history; `host` limits to current machine
-- **enter_accept** — `true` means Enter executes immediately, Tab puts into prompt for editing
+Settings live in `~/.config/atuin/config.toml`, which lists only what differs from the defaults (`atuin default-config` prints them all):
+- **enter_accept** — `true`: Enter runs the command, Tab puts it on the prompt for editing
+- **style** — `compact`; theme is Catppuccin Macchiato
+- Defaults worth knowing: `search_mode = "fuzzy"`, `filter_mode = "global"` (Ctrl-R inside the TUI cycles filter modes)
 
 ---
 
@@ -65,7 +65,7 @@ zoxide replaces `cd` transparently. It learns which directories you visit and ra
 cd foo            # works normally for relative/absolute paths
 cd proj           # jumps to highest-ranked directory matching "proj"
 cd da so          # matches ~/code/viya-data-sources (multiple terms = AND)
-zi                # interactive picker (fzf-powered)
+cdi               # interactive picker (fzf-powered)
 cd -              # go back to previous directory (still works)
 ```
 
@@ -78,15 +78,14 @@ Under the hood, `cd` calls `__zoxide_z`. The database lives at `~/.local/share/z
 bat shows file contents with syntax highlighting, line numbers, and git change markers.
 
 ```bash
-cat file.ts       # aliased to bat (plain style, no paging)
+cat file.ts       # aliased to `bat --paging=auto` (pages only when output doesn't fit)
 bat file.ts       # explicit call (shows header/line numbers)
-rcat file.ts      # alias for real cat (when you need raw output)
+command cat file  # the real cat, when you need raw output
 ```
 
-bat is also used as:
+In pipes bat behaves like plain `cat`. bat is also used as:
 - The fzf preview pane (`Ctrl-T` file previews)
-- The man pager (`MANPAGER` is set to use bat)
-- The delta syntax engine (git diffs)
+- The delta syntax engine (git diffs; same `BAT_THEME`)
 
 Theme: **Catppuccin Macchiato** (set via `BAT_THEME` in `10-env.zsh`).
 
@@ -94,7 +93,7 @@ Theme: **Catppuccin Macchiato** (set via `BAT_THEME` in `10-env.zsh`).
 
 ## eza — better ls
 
-eza replaces `ls` with a modern version that understands git status and supports icons.
+eza replaces `ls` with a modern version that understands git status and supports icons. (Inside dev containers `ls` stays native; `ll` / `la` use plain `ls` there.)
 
 ```bash
 ls                # aliased: eza --group-directories-first
@@ -157,7 +156,7 @@ Key features:
 
 | Shortcut   | Tool    | Action                              |
 | ---------- | ------- | ----------------------------------- |
-| `Ctrl-R`   | atuin   | Search shell history                |
+| `Ctrl-R` / `↑` | atuin | Search shell history              |
 | `Ctrl-T`   | fzf     | Insert file path                    |
 | `Alt-C`    | fzf     | cd into directory                   |
 | `zi`       | zoxide  | Interactive directory picker        |
@@ -170,4 +169,5 @@ Key features:
 Several tools have init scripts that run on every shell start. To keep shell startup fast:
 
 - **fzf, atuin, zoxide** — their init output is cached to `~/.cache/zsh/`. The cache auto-regenerates when the binary is updated.
-- **nvm** — lazy-loaded entirely. Stub functions for `node`, `npm`, `npx`, `yarn`, `pnpm` trigger the full load on first call. This saves ~400ms of startup time.
+- **kubectl completion** — generated once into `~/.cache/zsh/completions/`, refreshed when kubectl is updated.
+- **nvm** — lazy-loaded entirely. Stub functions for `nvm`, `node`, `npm`, `npx`, `yarn`, `pnpm` trigger the full load on first call. This saves ~400ms of startup time.

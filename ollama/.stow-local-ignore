@@ -1,0 +1,6 @@
+# Files in this package that are NOT linked into $HOME.
+# (This file replaces stow's built-in ignore list for the package.)
+\.DS_Store
+^/README\.md
+^/launchagents
+^/bin/install-ollama\.sh

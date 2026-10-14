@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import sys
 
 
@@ -84,13 +85,11 @@ def main() -> int:
     args = parser.parse_args()
     path = args.settings or default_path(args.container)
 
-    if path.exists():
-        try:
-            settings = json.loads(strip_jsonc(path.read_text()))
-        except (json.JSONDecodeError, ValueError) as error:
-            raise SystemExit(f"refusing to rewrite invalid VS Code settings: {error}")
-    else:
-        settings = {}
+    original = path.read_text() if path.exists() else ""
+    try:
+        settings = json.loads(strip_jsonc(original)) if original.strip() else {}
+    except (json.JSONDecodeError, ValueError) as error:
+        raise SystemExit(f"refusing to rewrite invalid VS Code settings: {error}")
     if not isinstance(settings, dict):
         raise SystemExit("refusing to rewrite non-object VS Code settings")
 
@@ -112,6 +111,11 @@ def main() -> int:
         return 0
 
     path.parent.mkdir(parents=True, exist_ok=True)
+    if original and strip_jsonc(original) != original:
+        # The rewrite is plain JSON: comments and trailing commas don't survive.
+        backup = path.with_name(path.name + ".bak")
+        shutil.copy2(path, backup)
+        print(f"VS Code settings had comments; original kept at {backup}")
     temporary = path.with_name(f".{path.name}.ai-sync-{os.getpid()}")
     temporary.write_text(json.dumps(settings, indent=2) + "\n")
     os.replace(temporary, path)

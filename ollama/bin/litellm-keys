@@ -98,9 +98,9 @@ cmd_mint() {
   # config.yaml) — fine for a homelab where the proxy itself is the
   # trust boundary.
   #
-  # Per-tool budget: rolling window (default 30d / $10). LiteLLM tracks
-  # spend in litellm-db; key auto-rejects when over budget. See
-  # `homelab/docs/llm-clients.md` § "Per-tool spend caps".
+  # Optional per-key budget (--budget USD [--duration 30d]); none by
+  # default — see DEFAULT_BUDGET_USD above. LiteLLM tracks spend in
+  # litellm-db and rejects the key once over budget.
   local payload="{\"key_alias\":\"$tool\""
   if [[ -n "$budget" && "$budget" != "0" ]]; then
     payload+=",\"max_budget\":$budget,\"budget_duration\":\"$duration\""

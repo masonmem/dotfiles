@@ -3,8 +3,8 @@
 # aider's YAML config doesn't expand env vars, so we can't put
 # openai-api-key: ${AIDER_LITELLM_KEY} in .aider.conf.yml. Instead, wrap
 # the binary in a function that sets OPENAI_API_KEY to aider's per-tool
-# LiteLLM virtual key before exec. The user's shell-level OPENAI_API_KEY
-# (which defaults to copilotp's key) is preserved everywhere else.
+# LiteLLM virtual key for that one process. OPENAI_API_KEY is deliberately
+# never exported globally (see 16-llm-gateway.zsh).
 #
 # Escape hatch: AIDER_USE_MASTER_KEY=1 → use the LiteLLM master key
 # (useful if you accidentally revoke the aider virtual key).

@@ -55,6 +55,8 @@ map("v", ">", ">gv")
 map("v", "J", ":m '>+1<cr>gv=gv", { desc = "Move lines down" })
 map("v", "K", ":m '<-2<cr>gv=gv", { desc = "Move lines up" })
 
+-- Comments: Neovim's built-in gcc (line) / gc{motion} / gc in visual mode.
+
 -- File explorer (built-in netrw)
 map("n", "<leader>e", "<cmd>Explore<cr>", { desc = "File explorer" })
 
@@ -71,7 +73,7 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
 
-  -- ── Colorscheme (Catppuccin Mocha — matches tmux status bar) ──────────────
+  -- ── Colorscheme (Catppuccin Macchiato — matches tmux, bat, fzf, lazygit) ───
   {
     "catppuccin/nvim",
     name     = "catppuccin",
@@ -82,17 +84,25 @@ require("lazy").setup({
   },
 
   -- ── Syntax highlighting via Treesitter ────────────────────────────────────
+  -- nvim-treesitter's `main` branch: needs Neovim 0.12+ and the tree-sitter
+  -- CLI (Brewfile: tree-sitter-cli) to build parsers. Skipped on older Neovim
+  -- (e.g. distro packages), which keeps regex highlighting.
   {
     "nvim-treesitter/nvim-treesitter",
+    branch = "main",
+    lazy   = false,           -- the plugin does not support lazy-loading
     build  = ":TSUpdate",
+    cond   = vim.fn.has("nvim-0.12") == 1,
     config = function()
-      require("nvim-treesitter").setup({
-        ensure_installed = {
+      if vim.fn.executable("tree-sitter") == 1 then
+        require("nvim-treesitter").install({
           "bash", "go", "javascript", "json", "lua", "markdown",
           "python", "rust", "toml", "typescript", "vim", "vimdoc", "yaml",
-        },
-        auto_install = true,
-        highlight    = { enable = true },
+        })
+      end
+      -- Highlighting is Neovim's own; start it for any filetype with a parser.
+      vim.api.nvim_create_autocmd("FileType", {
+        callback = function(args) pcall(vim.treesitter.start, args.buf) end,
       })
     end,
   },
@@ -109,7 +119,7 @@ require("lazy").setup({
   -- ── Fuzzy finder (requires ripgrep + fd — already installed) ─────────────
   {
     "nvim-telescope/telescope.nvim",
-    branch       = "0.1.x",
+    version      = "*",       -- latest release tag, as upstream recommends
     dependencies = { "nvim-lua/plenary.nvim" },
     config       = function()
       require("telescope").setup({
@@ -143,12 +153,6 @@ require("lazy").setup({
   {
     "windwp/nvim-autopairs",
     event  = "InsertEnter",
-    config = true,
-  },
-
-  -- ── Toggle comments (gcc = line, gc = visual block) ─────────────────────
-  {
-    "numToStr/Comment.nvim",
     config = true,
   },
 
